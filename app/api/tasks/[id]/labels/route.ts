@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { logActivity } from '@/lib/audit';
 import { normalizeLabel } from '@/lib/labels';
-import { auth, fail, parseId, readJson } from '../../../_util';
+import { auth, failT, parseId, readJson } from '../../../_util';
 
 type LabelBody = { label?: unknown };
 
@@ -10,11 +10,11 @@ async function resolve(
   params: Promise<{ id: string }>,
 ): Promise<{ id: number; label: string } | Response> {
   const id = parseId((await params).id);
-  if (id === null) return fail('Geçersiz görev numarası.', 400);
+  if (id === null) return failT((m) => m.request.invalidTaskId, 400);
 
   const body = await readJson<LabelBody>(request);
   const label = typeof body?.label === 'string' ? normalizeLabel(body.label) : '';
-  if (label === '') return fail('Etiket boş olamaz.', 400);
+  if (label === '') return failT((m) => m.label.empty, 400);
 
   return { id, label };
 }
@@ -40,7 +40,7 @@ export async function POST(
   try {
     const sql = db();
     const task = await loadTask(parsed.id);
-    if (!task) return fail('Görev bulunamadı.', 404);
+    if (!task) return failT((m) => m.task.notFound, 404);
 
     await sql`
       INSERT INTO task_labels (task_id, label)
@@ -58,7 +58,7 @@ export async function POST(
 
     return Response.json({ ok: true, label: parsed.label });
   } catch {
-    return fail('Etiket eklenemedi.', 500);
+    return failT((m) => m.label.addFailed, 500);
   }
 }
 
@@ -75,7 +75,7 @@ export async function DELETE(
   try {
     const sql = db();
     const task = await loadTask(parsed.id);
-    if (!task) return fail('Görev bulunamadı.', 404);
+    if (!task) return failT((m) => m.task.notFound, 404);
 
     await sql`
       DELETE FROM task_labels WHERE task_id = ${parsed.id} AND label = ${parsed.label}
@@ -91,6 +91,6 @@ export async function DELETE(
 
     return Response.json({ ok: true, label: parsed.label });
   } catch {
-    return fail('Etiket kaldırılamadı.', 500);
+    return failT((m) => m.label.removeFailed, 500);
   }
 }

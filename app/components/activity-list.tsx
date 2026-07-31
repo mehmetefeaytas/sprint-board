@@ -2,21 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import {
-  STATUS_ORDER,
-  STATUS_STYLES,
-  trackStyle,
-  type ActivityRow,
-  type Status,
-  type UserRow,
-} from '@/lib/types';
+import { STATUS_ORDER, trackStyle, type ActivityRow, type Status, type UserRow } from '@/lib/types';
+import { useDict, useLocale } from '@/lib/i18n/provider';
 import { activityTime } from '../format';
 import { EmptyState } from './notice';
 
 type Props = {
   entries: ActivityRow[];
   users: UserRow[];
-  actionLabels: Record<string, string>;
   todayISO: string;
 };
 
@@ -24,16 +17,22 @@ function isStatus(value: string): value is Status {
   return STATUS_ORDER.some((status) => status === value);
 }
 
-export default function ActivityList({ entries, users, actionLabels, todayISO }: Props) {
+export default function ActivityList({ entries, users, todayISO }: Props) {
+  const t = useDict();
+  const locale = useLocale();
   const [actor, setActor] = useState('all');
   const [action, setAction] = useState('all');
+
+  // Aksiyon adı DB'den ham metin olarak gelir; sözlükte karşılığı yoksa
+  // olduğu gibi gösterilir.
+  const actionLabels: Record<string, string> = t.activity.actionLabels;
 
   const actions = useMemo(() => {
     const present = new Set(entries.map((entry) => entry.action));
     return Array.from(present).sort((a, b) =>
-      (actionLabels[a] ?? a).localeCompare(actionLabels[b] ?? b, 'tr'),
+      (actionLabels[a] ?? a).localeCompare(actionLabels[b] ?? b, locale),
     );
-  }, [entries, actionLabels]);
+  }, [entries, actionLabels, locale]);
 
   const filtered = entries.filter(
     (entry) =>
@@ -47,7 +46,7 @@ export default function ActivityList({ entries, users, actionLabels, todayISO }:
 
   function prettyValue(entryAction: string, value: string | null): string | null {
     if (!value) return null;
-    if (entryAction === 'status' && isStatus(value)) return STATUS_STYLES[value].label;
+    if (entryAction === 'status' && isStatus(value)) return t.common.status[value];
     if (entryAction === 'assign' || entryAction === 'claim' || entryAction.startsWith('user_')) {
       return nameOf(value);
     }
@@ -58,13 +57,15 @@ export default function ActivityList({ entries, users, actionLabels, todayISO }:
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         <label className="flex-1 sm:flex-none">
-          <span className="block text-xs font-medium text-slate-600 dark:text-slate-400">Kişi</span>
+          <span className="block text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.activity.filterPerson}
+          </span>
           <select
             value={actor}
             onChange={(event) => setActor(event.target.value)}
             className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-transparent px-2 text-sm sm:w-56 dark:border-slate-700"
           >
-            <option value="all">Tümü</option>
+            <option value="all">{t.activity.all}</option>
             {users.map((user) => (
               <option key={user.email} value={user.email}>
                 {user.name}
@@ -75,14 +76,14 @@ export default function ActivityList({ entries, users, actionLabels, todayISO }:
 
         <label className="flex-1 sm:flex-none">
           <span className="block text-xs font-medium text-slate-600 dark:text-slate-400">
-            Eylem
+            {t.activity.filterAction}
           </span>
           <select
             value={action}
             onChange={(event) => setAction(event.target.value)}
             className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-transparent px-2 text-sm sm:w-56 dark:border-slate-700"
           >
-            <option value="all">Tümü</option>
+            <option value="all">{t.activity.all}</option>
             {actions.map((item) => (
               <option key={item} value={item}>
                 {actionLabels[item] ?? item}
@@ -93,9 +94,7 @@ export default function ActivityList({ entries, users, actionLabels, todayISO }:
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState>
-          Bu filtreye uyan kayıt yok. Filtreleri “Tümü” yaparak tüm geçmişi görebilirsiniz.
-        </EmptyState>
+        <EmptyState>{t.activity.emptyFiltered}</EmptyState>
       ) : (
         <ul className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
           {filtered.map((entry) => {
@@ -135,7 +134,7 @@ export default function ActivityList({ entries, users, actionLabels, todayISO }:
                   <span className="text-slate-500 dark:text-slate-400">({entry.note})</span>
                 ) : null}
                 <span className="ml-auto shrink-0 text-xs text-slate-400 dark:text-slate-500">
-                  {activityTime(entry.created_at, todayISO)}
+                  {activityTime(entry.created_at, todayISO, locale)}
                 </span>
               </li>
             );

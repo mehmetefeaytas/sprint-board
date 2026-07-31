@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import type { ActivityRow } from '@/lib/types';
-import { auth, fail, normalizeEmail } from '../_util';
+import { auth, failT, normalizeEmail } from '../_util';
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
@@ -44,6 +44,6 @@ export async function GET(request: Request): Promise<Response> {
 
     return Response.json(rows);
   } catch {
-    return fail('Aktivite kaydı okunamadı.', 500);
+    return failT((m) => m.activity.readFailed, 500);
   }
 }

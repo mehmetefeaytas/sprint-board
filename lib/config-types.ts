@@ -43,7 +43,9 @@ export type DayDef = {
   day_no: number;
   /** YYYY-MM-DD. */
   date: string;
-  weekday: string;
+  /** Gün adı. Boş bırakılırsa tarihten ve aktif dilden türetilir — iki dilli
+   *  kullanımda bunu boş bırakmak daha iyidir. */
+  weekday?: string;
   /** Günün teması — sekme başlığının altında görünür. */
   theme: string;
   /** Doldurulursa o gün milestone olarak işaretlenir. */
@@ -80,6 +82,9 @@ export type SprintConfig = {
   /** IANA saat dilimi. Belirtilmezse 'Europe/Istanbul'. Tarihler ve saatler
    *  bu dilimde gösterilir; sunucu/istemci uyumu için sabittir. */
   timezone?: string;
+  /** Arayüzün açılış dili: 'tr' veya 'en'. Belirtilmezse 'en'. Kullanıcı
+   *  sağ üstteki düğmeyle değiştirebilir; seçim çerezde saklanır. */
+  defaultLocale?: 'tr' | 'en';
   tracks: TrackDef[];
   users: UserDef[];
   days: DayDef[];

@@ -1,17 +1,7 @@
 import { db } from '@/lib/db';
 import { logActivity, type AuditAction } from '@/lib/audit';
 import type { Status, Track } from '@/lib/types';
-import {
-  auth,
-  authAdmin,
-  fail,
-  fetchTask,
-  isStatus,
-  normalizeEmail,
-  optionalText,
-  parseId,
-  readJson,
-} from '../../_util';
+import { auth, authAdmin, failT, fetchTask, isStatus, normalizeEmail, optionalText, parseId, readJson } from '../../_util';
 
 type PatchBody = {
   status?: unknown;
@@ -46,15 +36,15 @@ export async function PATCH(
   if ('response' in guard) return guard.response;
 
   const id = parseId((await params).id);
-  if (id === null) return fail('Geçersiz görev numarası.', 400);
+  if (id === null) return failT((m) => m.request.invalidTaskId, 400);
 
   const body = await readJson<PatchBody>(request);
-  if (!body) return fail('Geçersiz istek gövdesi.', 400);
+  if (!body) return failT((m) => m.request.invalidBody, 400);
 
   try {
     const sql = db();
     const current = await loadTask(id);
-    if (!current) return fail('Görev bulunamadı.', 404);
+    if (!current) return failT((m) => m.task.notFound, 404);
 
     // SET parçaları yalnızca buradaki sabit metinlerden oluşur; değerler $n ile gider.
     const sets: string[] = [];
@@ -66,35 +56,35 @@ export async function PATCH(
 
     if (body.title !== undefined) {
       const title = optionalText(body.title);
-      if (!title) return fail('Görev başlığı boş olamaz.', 400);
+      if (!title) return failT((m) => m.task.titleRequired, 400);
       set('title', title);
     }
 
     if (body.detail !== undefined) {
       const detail = optionalText(body.detail);
-      if (detail === undefined) return fail('Geçersiz açıklama.', 400);
+      if (detail === undefined) return failT((m) => m.request.invalidDetail, 400);
       set('detail', detail);
     }
 
     if (body.output !== undefined) {
       const output = optionalText(body.output);
-      if (output === undefined) return fail('Geçersiz çıktı alanı.', 400);
+      if (output === undefined) return failT((m) => m.request.invalidOutput, 400);
       set('output', output);
     }
 
     if (body.day_no !== undefined) {
       const dayNo = Number(body.day_no);
-      if (!Number.isInteger(dayNo)) return fail('Geçersiz gün numarası.', 400);
+      if (!Number.isInteger(dayNo)) return failT((m) => m.request.invalidDayNo, 400);
       const dayRows = (await sql`
         SELECT day_no FROM sprint_days WHERE day_no = ${dayNo}
       `) as unknown as { day_no: number }[];
-      if (dayRows.length === 0) return fail('Böyle bir sprint günü yok.', 400);
+      if (dayRows.length === 0) return failT((m) => m.task.dayNotFound, 400);
       set('day_no', dayNo);
     }
 
     let statusChange: { from: Status; to: Status } | null = null;
     if (body.status !== undefined) {
-      if (!isStatus(body.status)) return fail('Geçersiz durum değeri.', 400);
+      if (!isStatus(body.status)) return failT((m) => m.request.invalidStatus, 400);
       if (body.status !== current.status) {
         statusChange = { from: current.status, to: body.status };
         set('status', body.status);
@@ -114,7 +104,7 @@ export async function PATCH(
         const userRows = (await sql`
           SELECT email FROM users WHERE email = ${next}
         `) as unknown as { email: string }[];
-        if (userRows.length === 0) return fail('Atanan kişi ekip listesinde yok.', 400);
+        if (userRows.length === 0) return failT((m) => m.task.assigneeNotOnTeam, 400);
       }
       if (next !== current.assignee) {
         // Kendine atama + origin_track dolu ⇒ başka bir track'ten devralma.
@@ -151,10 +141,10 @@ export async function PATCH(
     }
 
     const task = await fetchTask(id);
-    if (!task) return fail('Görev bulunamadı.', 404);
+    if (!task) return failT((m) => m.task.notFound, 404);
     return Response.json(task);
   } catch {
-    return fail('Görev güncellenemedi.', 500);
+    return failT((m) => m.task.updateFailed, 500);
   }
 }
 
@@ -167,7 +157,7 @@ export async function DELETE(
   if ('response' in guard) return guard.response;
 
   const id = parseId((await params).id);
-  if (id === null) return fail('Geçersiz görev numarası.', 400);
+  if (id === null) return failT((m) => m.request.invalidTaskId, 400);
 
   try {
     const sql = db();
@@ -175,7 +165,7 @@ export async function DELETE(
       DELETE FROM tasks WHERE id = ${id} RETURNING id, code
     `) as unknown as { id: number; code: string }[];
     const deleted = rows[0];
-    if (!deleted) return fail('Görev bulunamadı.', 404);
+    if (!deleted) return failT((m) => m.task.notFound, 404);
 
     await logActivity({
       actor: guard.user.email,
@@ -186,6 +176,6 @@ export async function DELETE(
 
     return Response.json({ ok: true });
   } catch {
-    return fail('Görev silinemedi.', 500);
+    return failT((m) => m.task.deleteFailed, 500);
   }
 }

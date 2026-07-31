@@ -1,67 +1,125 @@
-// Türkçe biçimlendirme yardımcıları. Hem sunucu hem istemci bileşenlerinden
-// çağrılır; DB'ye dokunmaz. Tarihler sabit saat diliminde biçimlenir ki
-// sunucu ve istemci çıktısı aynı olsun (hydration uyumsuzluğu olmasın).
+// Tarih ve metin biçimlendirme. Hem sunucu hem istemci bileşenlerinden
+// çağrılır; DB'ye dokunmaz.
+//
+// Ay ve gün adları Intl'e bırakılmadan elle yazılıyor. Sebebi hydration:
+// Node ile tarayıcının ICU verisi kısa biçimlerde ayrışabiliyor, sunucu ile
+// istemci farklı metin üretince React uyuşmazlık hatası veriyor. Saat dilimi de
+// aynı gerekçeyle yapılandırmadan gelen sabit bir değer.
 
 import { TIME_ZONE } from '@/lib/config';
+import type { Locale } from '@/lib/i18n';
 
 export { TIME_ZONE };
 
-const MONTHS_SHORT = [
-  'Oca',
-  'Şub',
-  'Mar',
-  'Nis',
-  'May',
-  'Haz',
-  'Tem',
-  'Ağu',
-  'Eyl',
-  'Eki',
-  'Kas',
-  'Ara',
-];
-
-const MONTHS_LONG = [
-  'Ocak',
-  'Şubat',
-  'Mart',
-  'Nisan',
-  'Mayıs',
-  'Haziran',
-  'Temmuz',
-  'Ağustos',
-  'Eylül',
-  'Ekim',
-  'Kasım',
-  'Aralık',
-];
-
-const WEEKDAY_SHORT: Record<string, string> = {
-  Pazartesi: 'Pzt',
-  Salı: 'Salı',
-  Çarşamba: 'Çrş',
-  Perşembe: 'Prş',
-  Cuma: 'Cuma',
-  Cumartesi: 'Cmt',
-  Pazar: 'Paz',
+const MONTHS_SHORT: Record<Locale, string[]> = {
+  tr: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'],
+  en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
 
-export function shortWeekday(weekday: string): string {
-  return WEEKDAY_SHORT[weekday] ?? weekday;
+const MONTHS_LONG: Record<Locale, string[]> = {
+  tr: [
+    'Ocak',
+    'Şubat',
+    'Mart',
+    'Nisan',
+    'Mayıs',
+    'Haziran',
+    'Temmuz',
+    'Ağustos',
+    'Eylül',
+    'Ekim',
+    'Kasım',
+    'Aralık',
+  ],
+  en: [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ],
+};
+
+// Pazar'dan başlar — Date.getUTCDay() ile aynı sıra.
+const WEEKDAYS_LONG: Record<Locale, string[]> = {
+  tr: ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'],
+  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+};
+
+const WEEKDAYS_SHORT: Record<Locale, string[]> = {
+  tr: ['Paz', 'Pzt', 'Salı', 'Çrş', 'Prş', 'Cuma', 'Cmt'],
+  en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+};
+
+/** Yapılandırmada elle yazılmış gün adlarını kısaltabilmek için ters dizin. */
+const SHORT_BY_LONG = new Map<string, string>();
+for (const locale of ['tr', 'en'] as Locale[]) {
+  WEEKDAYS_LONG[locale].forEach((long, index) => {
+    SHORT_BY_LONG.set(long.toLocaleLowerCase(locale), WEEKDAYS_SHORT[locale][index]);
+  });
 }
 
-/** '2026-07-31' → '31 Tem' */
-export function shortDate(iso: string): string {
-  const [, month, day] = iso.split('-');
-  const name = MONTHS_SHORT[Number(month) - 1] ?? month;
-  return String(Number(day)) + ' ' + name;
+function monthIndex(iso: string): number {
+  return Number(iso.split('-')[1]) - 1;
 }
 
-/** '2026-07-31' → '31 Temmuz 2026' */
-export function longDate(iso: string): string {
-  const [year, month, day] = iso.split('-');
-  const name = MONTHS_LONG[Number(month) - 1] ?? month;
-  return String(Number(day)) + ' ' + name + ' ' + year;
+/** '2026-07-31' → 5 (Cuma). UTC üzerinden; saat dilimi kaydırması yapmaz. */
+function weekdayIndex(iso: string): number {
+  const date = new Date(iso + 'T00:00:00Z');
+  return Number.isNaN(date.getTime()) ? -1 : date.getUTCDay();
+}
+
+/**
+ * Günün adı. Yapılandırmada `weekday` yazılmışsa ona saygı gösterilir — ekip
+ * kendi terimini kullanmak isteyebilir. Yoksa tarihten ve aktif dilden
+ * türetilir, yani iki dilli kullanımda alanı boş bırakmak daha iyidir.
+ */
+export function weekdayLabel(
+  iso: string,
+  weekday: string | null | undefined,
+  locale: Locale,
+): string {
+  if (weekday && weekday.trim() !== '') return weekday;
+  const index = weekdayIndex(iso);
+  return index >= 0 ? WEEKDAYS_LONG[locale][index] : '';
+}
+
+/** weekdayLabel'in kısa hali: 'Perşembe' → 'Prş', 'Cuma' → 'Cuma'. */
+export function shortWeekday(
+  iso: string,
+  weekday: string | null | undefined,
+  locale: Locale,
+): string {
+  if (weekday && weekday.trim() !== '') {
+    const trimmed = weekday.trim();
+    return SHORT_BY_LONG.get(trimmed.toLocaleLowerCase(locale)) ?? trimmed;
+  }
+  const index = weekdayIndex(iso);
+  return index >= 0 ? WEEKDAYS_SHORT[locale][index] : '';
+}
+
+/** '2026-07-31' → '31 Tem' (tr) · 'Jul 31' (en) */
+export function shortDate(iso: string, locale: Locale): string {
+  const day = String(Number(iso.split('-')[2]));
+  const month = MONTHS_SHORT[locale][monthIndex(iso)];
+  if (!month) return iso;
+  return locale === 'en' ? `${month} ${day}` : `${day} ${month}`;
+}
+
+/** '2026-07-31' → '31 Temmuz 2026' (tr) · 'July 31, 2026' (en) */
+export function longDate(iso: string, locale: Locale): string {
+  const [year, , rawDay] = iso.split('-');
+  const day = String(Number(rawDay));
+  const month = MONTHS_LONG[locale][monthIndex(iso)];
+  if (!month) return iso;
+  return locale === 'en' ? `${month} ${day}, ${year}` : `${day} ${month} ${year}`;
 }
 
 /** Yapılandırılan saat dilimine göre anın YYYY-MM-DD karşılığı (en-CA bu biçimi verir). */
@@ -74,31 +132,33 @@ export function dayKey(now: Date = new Date()): string {
   }).format(now);
 }
 
+/** Saat her iki dilde de 24 saatlik: '14:05'. */
 function timeOfDay(date: Date): string {
-  return new Intl.DateTimeFormat('tr-TR', {
+  return new Intl.DateTimeFormat('en-GB', {
     timeZone: TIME_ZONE,
     hour: '2-digit',
     minute: '2-digit',
+    hour12: false,
   }).format(date);
 }
 
 /** Bugünse '14:05', değilse '31 Tem 14:05'. */
-export function activityTime(isoTimestamp: string, todayISO: string): string {
+export function activityTime(isoTimestamp: string, todayISO: string, locale: Locale): string {
   const date = new Date(isoTimestamp);
   if (Number.isNaN(date.getTime())) return isoTimestamp;
   const key = dayKey(date);
   const clock = timeOfDay(date);
   if (key === todayISO) return clock;
-  return shortDate(key) + ' ' + clock;
+  return shortDate(key, locale) + ' ' + clock;
 }
 
 /** Tam zaman: '31 Tem 2026 14:05' */
-export function fullTime(isoTimestamp: string): string {
+export function fullTime(isoTimestamp: string, locale: Locale): string {
   const date = new Date(isoTimestamp);
   if (Number.isNaN(date.getTime())) return isoTimestamp;
   const key = dayKey(date);
   const year = key.split('-')[0];
-  return shortDate(key) + ' ' + year + ' ' + timeOfDay(date);
+  return shortDate(key, locale) + ' ' + year + ' ' + timeOfDay(date);
 }
 
 /** fromISO (hariç) ile toISO (dahil) arasındaki hafta içi gün sayısı. */
@@ -143,9 +203,7 @@ export function splitMentions(
       variants.add(parts.slice(0, take).join(' '));
     }
   }
-  const known = [...variants]
-    .sort((a, b) => b.length - a.length)
-    .map(escapeRegExp);
+  const known = [...variants].sort((a, b) => b.length - a.length).map(escapeRegExp);
   const alternatives = known.length ? known.join('|') + '|' : '';
   // Lookbehind: "ada@ornek.com" gibi e-postalardaki @ mention sayılmaz.
   const regex = new RegExp('(?<![\\p{L}\\p{N}._-])@(?:' + alternatives + '[\\p{L}]+)', 'gu');

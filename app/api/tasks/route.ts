@@ -3,15 +3,7 @@ import { logActivity } from '@/lib/audit';
 import { TRACK_ABBR } from '@/lib/config';
 import { normalizeLabel } from '@/lib/labels';
 import type { Track } from '@/lib/types';
-import {
-  auth,
-  fail,
-  fetchTask,
-  isTrack,
-  normalizeEmail,
-  optionalText,
-  readJson,
-} from '../_util';
+import { auth, failT, fetchTask, isTrack, normalizeEmail, optionalText, readJson } from '../_util';
 
 type CreateBody = {
   day_no?: unknown;
@@ -64,15 +56,15 @@ export async function POST(request: Request): Promise<Response> {
   if ('response' in guard) return guard.response;
 
   const body = await readJson<CreateBody>(request);
-  if (!body) return fail('Geçersiz istek gövdesi.', 400);
+  if (!body) return failT((m) => m.request.invalidBody, 400);
 
   const title = optionalText(body.title);
-  if (!title) return fail('Görev başlığı boş olamaz.', 400);
+  if (!title) return failT((m) => m.task.titleRequired, 400);
 
   const dayNo = Number(body.day_no);
-  if (!Number.isInteger(dayNo)) return fail('Geçersiz gün numarası.', 400);
+  if (!Number.isInteger(dayNo)) return failT((m) => m.request.invalidDayNo, 400);
 
-  if (!isTrack(body.track)) return fail('Geçersiz track.', 400);
+  if (!isTrack(body.track)) return failT((m) => m.request.invalidTrack, 400);
   const track = body.track;
 
   const detail = optionalText(body.detail) ?? null;
@@ -89,13 +81,13 @@ export async function POST(request: Request): Promise<Response> {
     const dayRows = (await sql`
       SELECT day_no FROM sprint_days WHERE day_no = ${dayNo}
     `) as unknown as { day_no: number }[];
-    if (dayRows.length === 0) return fail('Böyle bir sprint günü yok.', 400);
+    if (dayRows.length === 0) return failT((m) => m.task.dayNotFound, 400);
 
     if (assignee) {
       const userRows = (await sql`
         SELECT email FROM users WHERE email = ${assignee}
       `) as unknown as { email: string }[];
-      if (userRows.length === 0) return fail('Atanan kişi ekip listesinde yok.', 400);
+      if (userRows.length === 0) return failT((m) => m.task.assigneeNotOnTeam, 400);
     }
 
     let created: { id: number; code: string } | null = null;
@@ -118,7 +110,7 @@ export async function POST(request: Request): Promise<Response> {
       }
     }
 
-    if (!created) return fail('Görev oluşturulamadı.', 500);
+    if (!created) return failT((m) => m.task.createFailed, 500);
 
     for (const label of labels) {
       await sql`
@@ -137,9 +129,9 @@ export async function POST(request: Request): Promise<Response> {
     });
 
     const task = await fetchTask(created.id);
-    if (!task) return fail('Görev oluşturuldu ama okunamadı.', 500);
+    if (!task) return failT((m) => m.task.createdButUnreadable, 500);
     return Response.json(task, { status: 201 });
   } catch {
-    return fail('Görev oluşturulamadı.', 500);
+    return failT((m) => m.task.createFailed, 500);
   }
 }

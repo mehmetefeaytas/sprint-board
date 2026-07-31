@@ -1,6 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
+import { getDict } from '@/lib/i18n/server';
 import { getSession } from '@/lib/session';
-import { ACTION_LABELS } from '@/lib/audit';
 import type { ActivityRow, CommentRow, DayRow, TaskRow, UserRow } from '@/lib/types';
 import {
   getComments,
@@ -34,7 +34,7 @@ async function load(code: string): Promise<Loaded> {
 
 export default async function TaskPage(props: { params: Promise<{ code: string }> }) {
   const { code } = await props.params;
-  const session = await getSession();
+  const [session, { t }] = await Promise.all([getSession(), getDict()]);
   if (!session) redirect('/giris');
 
   let data: Loaded | null = null;
@@ -42,12 +42,12 @@ export default async function TaskPage(props: { params: Promise<{ code: string }
   try {
     data = await load(code);
   } catch (caught) {
-    error = readableDbError(caught);
+    error = readableDbError(caught, t);
   }
 
   if (!data) {
     return (
-      <Notice tone="error" title="Görev yüklenemedi">
+      <Notice tone="error" title={t.pages.taskLoadFailed}>
         {error}
       </Notice>
     );
@@ -66,7 +66,6 @@ export default async function TaskPage(props: { params: Promise<{ code: string }
       me={{ email: session.email, name: session.name, isAdmin: session.isAdmin }}
       comments={comments}
       history={history}
-      actionLabels={ACTION_LABELS}
       todayISO={dayKey()}
     />
   );

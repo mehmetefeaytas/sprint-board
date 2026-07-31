@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { SPRINT_DAYS, TASKS, USERS } from '@/lib/config';
 import { schemaStatements } from '@/lib/schema';
-import { fail } from '../_util';
+import { failT } from '../_util';
 
 type Row = (string | number | boolean | null)[];
 
@@ -31,7 +31,7 @@ export async function POST(request: Request): Promise<Response> {
   const expected = process.env.SEED_TOKEN;
   const given = request.headers.get('x-seed-token');
   if (!expected || given !== expected) {
-    return fail('Seed token geçersiz.', 403);
+    return failT((m) => m.seed.badToken, 403);
   }
 
   try {
@@ -135,6 +135,6 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   } catch {
-    return fail('Seed işlemi başarısız oldu.', 500);
+    return failT((m) => m.seed.failed, 500);
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { trackStyle, type DayRow, type TaskRow, type Track, type UserRow } from '@/lib/types';
 import { TRACKS } from '@/lib/config';
 import { shortDate, shortWeekday } from '../format';
+import { useDict, useLocale } from '@/lib/i18n/provider';
 
 type Props = {
   days: DayRow[];
@@ -22,6 +23,8 @@ export default function NewTaskForm({
   onCreated,
   onClose,
 }: Props) {
+  const t = useDict();
+  const locale = useLocale();
   const [dayNo, setDayNo] = useState(defaultDay);
   const [track, setTrack] = useState<Track>(defaultTrack);
   const [title, setTitle] = useState('');
@@ -43,7 +46,7 @@ export default function NewTaskForm({
     event.preventDefault();
     setError(null);
     if (!title.trim()) {
-      setError('Başlık zorunlu.');
+      setError(t.board.form.titleRequired);
       return;
     }
     setSaving(true);
@@ -68,7 +71,7 @@ export default function NewTaskForm({
         const message =
           body && typeof body === 'object' && 'error' in body
             ? String((body as { error: unknown }).error)
-            : 'Görev oluşturulamadı.';
+            : t.board.form.createFailed;
         setError(message);
         return;
       }
@@ -76,7 +79,7 @@ export default function NewTaskForm({
       onCreated(created);
       onClose();
     } catch {
-      setError('Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.');
+      setError(t.board.form.networkError);
     } finally {
       setSaving(false);
     }
@@ -87,7 +90,7 @@ export default function NewTaskForm({
       className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 p-0 sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Yeni görev"
+      aria-label={t.board.newTaskTitle}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -97,11 +100,11 @@ export default function NewTaskForm({
         className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl dark:bg-slate-900"
       >
         <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold">Yeni görev</h2>
+          <h2 className="text-lg font-semibold">{t.board.newTaskTitle}</h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t.common.action.close}
             className="-m-2 flex h-11 w-11 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             ✕
@@ -110,7 +113,9 @@ export default function NewTaskForm({
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <label className="block">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Gün</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {t.board.form.day}
+            </span>
             <select
               value={dayNo}
               onChange={(event) => setDayNo(Number(event.target.value))}
@@ -118,14 +123,16 @@ export default function NewTaskForm({
             >
               {days.map((day) => (
                 <option key={day.day_no} value={day.day_no}>
-                  Gün {day.day_no} · {shortWeekday(day.weekday)} {shortDate(day.date)}
+                  {`${t.board.day(day.day_no)} · ${shortWeekday(day.date, day.weekday, locale)} ${shortDate(day.date, locale)}`}
                 </option>
               ))}
             </select>
           </label>
 
           <label className="block">
-            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Track</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+              {t.board.form.track}
+            </span>
             <select
               value={track}
               onChange={(event) => setTrack(event.target.value as Track)}
@@ -141,19 +148,21 @@ export default function NewTaskForm({
         </div>
 
         <label className="mt-3 block">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Başlık</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.board.form.title}
+          </span>
           <input
             autoFocus
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder="Kısa ve net bir başlık"
+            placeholder={t.board.form.titlePlaceholder}
             className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-transparent px-3 text-sm dark:border-slate-700"
           />
         </label>
 
         <label className="mt-3 block">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            Açıklama (isteğe bağlı)
+            {t.board.form.detail}
           </span>
           <textarea
             value={detail}
@@ -166,14 +175,14 @@ export default function NewTaskForm({
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              Atanan (isteğe bağlı)
+              {t.board.form.assignee}
             </span>
             <select
               value={assignee}
               onChange={(event) => setAssignee(event.target.value)}
               className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-transparent px-2 text-sm dark:border-slate-700"
             >
-              <option value="">Atanmadı</option>
+              <option value="">{t.common.unassigned}</option>
               {users.map((user) => (
                 <option key={user.email} value={user.email}>
                   {user.name}
@@ -184,19 +193,19 @@ export default function NewTaskForm({
 
           <label className="block">
             <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              Etiketler (virgülle)
+              {t.board.form.labels}
             </span>
             <input
               value={labels}
               onChange={(event) => setLabels(event.target.value)}
-              placeholder="demo, sql"
+              placeholder={t.board.form.labelsPlaceholder}
               className="mt-1 h-11 w-full rounded-lg border border-slate-300 bg-transparent px-3 text-sm dark:border-slate-700"
             />
           </label>
         </div>
 
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          Yeni görev “Yapılacak” durumunda başlar. Görev kodu otomatik verilir.
+          {t.board.form.hint(t.common.status.todo)}
         </p>
 
         {error ? (
@@ -211,14 +220,14 @@ export default function NewTaskForm({
             disabled={saving}
             className="h-11 flex-1 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900"
           >
-            {saving ? 'Kaydediliyor…' : 'Görevi oluştur'}
+            {saving ? t.common.state.saving : t.board.form.submit}
           </button>
           <button
             type="button"
             onClick={onClose}
             className="h-11 rounded-lg border border-slate-300 px-4 text-sm dark:border-slate-700"
           >
-            Vazgeç
+            {t.board.form.discard}
           </button>
         </div>
       </form>

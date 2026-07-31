@@ -43,17 +43,6 @@ export async function logActivity(entry: AuditEntry): Promise<void> {
   `;
 }
 
-/** İnsan okunur aksiyon etiketleri — /aktivite ekranı bunları gösterir. */
-export const ACTION_LABELS: Record<AuditAction, string> = {
-  login: 'giriş yaptı',
-  logout: 'çıkış yaptı',
-  status: 'durumu değiştirdi',
-  assign: 'atama yaptı',
-  claim: 'işi devraldı',
-  comment: 'yorum yazdı',
-  label: 'etiket değiştirdi',
-  create: 'görev oluşturdu',
-  delete: 'görev sildi',
-  user_add: 'ekibe kişi ekledi',
-  user_remove: 'kişiyi ekipten çıkardı',
-};
+// Aksiyonların insan okunur karşılıkları burada DEĞİL, sözlükte duruyor:
+// lib/i18n/sections/activity.ts → actionLabels. Arayüz iki dilli olduğu için
+// tek dilli bir sabit listeyi burada tutmak yanıltıcı olurdu.

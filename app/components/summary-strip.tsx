@@ -1,5 +1,9 @@
+'use client';
+
 import { trackStyle, type TaskRow, type UserRow } from '@/lib/types';
 import { businessDaysUntil, longDate, percent } from '../format';
+import { useDict, useLocale } from '@/lib/i18n/provider';
+import type { Dictionary } from '@/lib/i18n';
 import ProgressBar from './progress-bar';
 
 type Props = {
@@ -9,15 +13,17 @@ type Props = {
   demoDateISO: string | null;
 };
 
-function demoText(todayISO: string, demoDateISO: string | null): string {
-  if (!demoDateISO) return 'Demo tarihi tanımlı değil';
-  if (demoDateISO === todayISO) return 'Demo bugün 🎯';
-  if (demoDateISO < todayISO) return 'Demo tarihi geçti';
+function demoText(t: Dictionary, todayISO: string, demoDateISO: string | null): string {
+  if (!demoDateISO) return t.board.demoUnset;
+  if (demoDateISO === todayISO) return t.board.demoToday;
+  if (demoDateISO < todayISO) return t.board.demoPast;
   const days = businessDaysUntil(todayISO, demoDateISO);
-  return `Demoya ${days} iş günü`;
+  return t.board.demoIn(days);
 }
 
 export default function SummaryStrip({ tasks, users, todayISO, demoDateISO }: Props) {
+  const t = useDict();
+  const locale = useLocale();
   const total = tasks.length;
   const done = tasks.filter((task) => task.status === 'done').length;
   const blocked = tasks.filter((task) => task.status === 'blocked' || task.is_blocker).length;
@@ -38,17 +44,21 @@ export default function SummaryStrip({ tasks, users, todayISO, demoDateISO }: Pr
     <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Sprint ilerlemesi</p>
-          <p className="text-3xl font-semibold tabular-nums">%{percent(done, total)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{t.board.sprintProgress}</p>
+          <p className="text-3xl font-semibold tabular-nums">
+            {t.common.percent(percent(done, total))}
+          </p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {done} / {total} görev tamamlandı
+            {t.board.tasksDone(done, total)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-sm font-semibold">{demoText(todayISO, demoDateISO)}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Bugün {longDate(todayISO)}</p>
+          <p className="text-sm font-semibold">{demoText(t, todayISO, demoDateISO)}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {t.board.todayIs(longDate(todayISO, locale))}
+          </p>
           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {blocked} bloke/bloker · {unassigned} atanmamış
+            {t.board.blockedUnassigned(blocked, unassigned)}
           </p>
         </div>
       </div>

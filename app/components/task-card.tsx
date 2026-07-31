@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { trackStyle, type TaskRow } from '@/lib/types';
+import { useDict } from '@/lib/i18n/provider';
 import StatusBadge from './status-badge';
 
 type Props = {
@@ -20,6 +21,7 @@ export default function TaskCard({
   showTrack = false,
   dayLabel,
 }: Props) {
+  const t = useDict();
   const done = task.status === 'done';
   const track = trackStyle(task.track);
   const origin = task.origin_track ? trackStyle(task.origin_track) : null;
@@ -36,7 +38,7 @@ export default function TaskCard({
         href={`/task/${task.code}`}
         className="absolute inset-0 z-10 rounded-lg focus:outline-2 focus:outline-offset-2 focus:outline-sky-500"
       >
-        <span className="sr-only">{task.code} görev detayı</span>
+        <span className="sr-only">{t.board.openTask(task.code)}</span>
       </Link>
 
       <div className="pointer-events-none relative z-20 flex gap-2">
@@ -44,7 +46,7 @@ export default function TaskCard({
           type="button"
           role="checkbox"
           aria-checked={done}
-          aria-label={done ? 'Tamamlandı işaretini kaldır' : 'Tamamlandı olarak işaretle'}
+          aria-label={done ? t.board.uncheckDone : t.board.checkDone}
           disabled={busy}
           onClick={(event) => {
             event.preventDefault();
@@ -94,12 +96,12 @@ export default function TaskCard({
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
               {task.is_blocker ? (
                 <span className="rounded-md bg-rose-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
-                  🔴 BLOKER
+                  {`🔴 ${t.common.blocker}`}
                 </span>
               ) : null}
               {origin ? (
                 <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[11px] font-medium text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">
-                  {`🤝 Devralınabilir · ${origin.label} track'inden`}
+                  {t.board.takeoverBadge(origin.label)}
                 </span>
               ) : null}
             </div>
@@ -107,7 +109,7 @@ export default function TaskCard({
 
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
             <span className={task.assignee_name ? '' : 'italic'}>
-              {task.assignee_name ?? 'Atanmadı'}
+              {task.assignee_name ?? t.common.unassigned}
             </span>
             {task.labels.length > 0 ? (
               <span className="flex flex-wrap gap-1">
@@ -122,7 +124,7 @@ export default function TaskCard({
               </span>
             ) : null}
             {task.comment_count > 0 ? (
-              <span title={`${task.comment_count} yorum`}>💬 {task.comment_count}</span>
+              <span title={t.common.comments(task.comment_count)}>💬 {task.comment_count}</span>
             ) : null}
           </div>
         </div>

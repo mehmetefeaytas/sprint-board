@@ -2,15 +2,7 @@ import { db } from '@/lib/db';
 import { logActivity } from '@/lib/audit';
 import { PROTECTED_EMAILS } from '@/lib/config';
 import type { UserRow } from '@/lib/types';
-import {
-  auth,
-  authAdmin,
-  fail,
-  isTrack,
-  normalizeEmail,
-  optionalText,
-  readJson,
-} from '../_util';
+import { auth, authAdmin, failT, isTrack, normalizeEmail, optionalText, readJson } from '../_util';
 
 type CreateBody = { email?: unknown; name?: unknown; track?: unknown; is_admin?: unknown };
 
@@ -25,7 +17,7 @@ export async function GET(): Promise<Response> {
     `) as unknown as UserRow[];
     return Response.json(rows);
   } catch {
-    return fail('Ekip listesi okunamadı.', 500);
+    return failT((m) => m.user.listReadFailed, 500);
   }
 }
 
@@ -34,15 +26,15 @@ export async function POST(request: Request): Promise<Response> {
   if ('response' in guard) return guard.response;
 
   const body = await readJson<CreateBody>(request);
-  if (!body) return fail('Geçersiz istek gövdesi.', 400);
+  if (!body) return failT((m) => m.request.invalidBody, 400);
 
   const email = normalizeEmail(body.email);
-  if (!email.includes('@')) return fail('Geçerli bir e-posta girin.', 400);
+  if (!email.includes('@')) return failT((m) => m.auth.emailInvalid, 400);
 
   const name = optionalText(body.name);
-  if (!name) return fail('İsim boş olamaz.', 400);
+  if (!name) return failT((m) => m.user.nameRequired, 400);
 
-  if (!isTrack(body.track)) return fail('Geçersiz track.', 400);
+  if (!isTrack(body.track)) return failT((m) => m.request.invalidTrack, 400);
   const isAdmin = body.is_admin === true;
 
   try {
@@ -55,12 +47,12 @@ export async function POST(request: Request): Promise<Response> {
     `) as unknown as UserRow[];
 
     const created = rows[0];
-    if (!created) return fail('Bu e-posta zaten kayıtlı.', 409);
+    if (!created) return failT((m) => m.user.emailTaken, 409);
 
     await logActivity({ actor: guard.user.email, action: 'user_add', to: created.email });
     return Response.json(created, { status: 201 });
   } catch {
-    return fail('Kişi eklenemedi.', 500);
+    return failT((m) => m.user.addFailed, 500);
   }
 }
 
@@ -69,9 +61,9 @@ export async function DELETE(request: Request): Promise<Response> {
   if ('response' in guard) return guard.response;
 
   const email = normalizeEmail(new URL(request.url).searchParams.get('email'));
-  if (!email) return fail('E-posta gerekli.', 400);
+  if (!email) return failT((m) => m.auth.emailRequired, 400);
   if (PROTECTED_EMAILS.includes(email)) {
-    return fail('Yapılandırmada tanımlı yönetici hesabı silinemez.', 400);
+    return failT((m) => m.user.protectedAdmin, 400);
   }
 
   try {
@@ -79,11 +71,11 @@ export async function DELETE(request: Request): Promise<Response> {
     const rows = (await sql`
       DELETE FROM users WHERE email = ${email} RETURNING email
     `) as unknown as { email: string }[];
-    if (!rows[0]) return fail('Kişi bulunamadı.', 404);
+    if (!rows[0]) return failT((m) => m.user.notFound, 404);
 
     await logActivity({ actor: guard.user.email, action: 'user_remove', from: email });
     return Response.json({ ok: true });
   } catch {
-    return fail('Kişi çıkarılamadı.', 500);
+    return failT((m) => m.user.removeFailed, 500);
   }
 }

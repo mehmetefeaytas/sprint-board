@@ -2,17 +2,20 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { PROJECT_NAME, PROTECTED_EMAILS } from '@/lib/config';
+import { getDict } from '@/lib/i18n/server';
 import { getTasks, getUsers, readableDbError } from '../board-data';
 import TeamList, { type Member } from '../components/team-list';
 import NewUserForm from '../components/new-user-form';
 import { Notice } from '../components/notice';
 
-export const metadata: Metadata = {
-  title: `Ekip · ${PROJECT_NAME}`,
-};
+// Başlık dile bağlı olduğu için statik `metadata` yerine generateMetadata.
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getDict();
+  return { title: `${t.pages.teamTitle} · ${PROJECT_NAME}` };
+}
 
 export default async function TeamPage() {
-  const session = await getSession();
+  const [session, { t }] = await Promise.all([getSession(), getDict()]);
   if (!session) redirect('/giris');
 
   let members: Member[] | null = null;
@@ -28,16 +31,14 @@ export default async function TeamPage() {
       };
     });
   } catch (caught) {
-    error = readableDbError(caught);
+    error = readableDbError(caught, t);
   }
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold">Ekip</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Kim hangi track&apos;te, kaç görev almış ve ne kadarını bitirmiş.
-        </p>
+        <h1 className="text-xl font-semibold">{t.pages.teamTitle}</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.pages.teamIntro}</p>
       </div>
 
       {members ? (
@@ -47,7 +48,7 @@ export default async function TeamPage() {
           {session.isAdmin ? <NewUserForm /> : null}
         </>
       ) : (
-        <Notice tone="error" title="Ekip listesi yüklenemedi">
+        <Notice tone="error" title={t.pages.teamLoadFailed}>
           {error}
         </Notice>
       )}

@@ -14,6 +14,7 @@ import {
   type TaskRow,
   type UserRow,
 } from '@/lib/types';
+import { useDict, useLocale } from '@/lib/i18n/provider';
 import { activityTime, shortDate, shortWeekday } from '../format';
 import CommentBox from './comment-box';
 import { EmptyState } from './notice';
@@ -26,7 +27,6 @@ type Props = {
   me: { email: string; name: string; isAdmin: boolean };
   comments: CommentRow[];
   history: ActivityRow[];
-  actionLabels: Record<string, string>;
   todayISO: string;
 };
 
@@ -41,10 +41,11 @@ export default function TaskDetail({
   me,
   comments,
   history,
-  actionLabels,
   todayISO,
 }: Props) {
   const router = useRouter();
+  const t = useDict();
+  const locale = useLocale();
   const [task, setTask] = useState<TaskRow>(initialTask);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,9 +53,20 @@ export default function TaskDetail({
 
   const track = trackStyle(task.track);
   const origin = task.origin_track ? trackStyle(task.origin_track) : null;
+  // Aksiyon adı DB'den ham metin olarak gelir; sözlükte karşılığı yoksa
+  // olduğu gibi gösterilir.
+  const actionLabels: Record<string, string> = t.activity.actionLabels;
+  // Tek parça metin: JSX içinde ifade ile sabit metni bölerse aradaki boşluk yutuluyor.
+  const dayBadge = day
+    ? t.task.dayLabel(day.day_no) +
+      ' · ' +
+      shortWeekday(day.date, day.weekday, locale) +
+      ' ' +
+      shortDate(day.date, locale)
+    : null;
 
   function nameOf(email: string | null): string {
-    if (!email) return 'Atanmadı';
+    if (!email) return t.common.unassigned;
     return users.find((user) => user.email === email)?.name ?? email;
   }
 
@@ -79,14 +91,14 @@ export default function TaskDetail({
       });
       if (!response.ok) {
         setTask(previous);
-        setError(await failMessage(response, 'Değişiklik kaydedilemedi.'));
+        setError(await failMessage(response, t.task.error.saveFailed));
         return;
       }
       setTask((await response.json()) as TaskRow);
       router.refresh();
     } catch {
       setTask(previous);
-      setError('Sunucuya ulaşılamadı. Değişiklik kaydedilemedi.');
+      setError(t.task.error.saveOffline);
     } finally {
       setBusy(false);
     }
@@ -112,21 +124,21 @@ export default function TaskDetail({
       });
       if (!response.ok) {
         setTask(previous);
-        setError(await failMessage(response, 'Etiket güncellenemedi.'));
+        setError(await failMessage(response, t.task.error.labelFailed));
         return;
       }
       if (add) setNewLabel('');
       router.refresh();
     } catch {
       setTask(previous);
-      setError('Sunucuya ulaşılamadı. Etiket güncellenemedi.');
+      setError(t.task.error.labelOffline);
     } finally {
       setBusy(false);
     }
   }
 
   async function removeTask() {
-    if (!window.confirm(`${task.code} görevini kalıcı olarak silmek istediğinize emin misiniz?`)) {
+    if (!window.confirm(t.task.confirmDelete(task.code))) {
       return;
     }
     setBusy(true);
@@ -134,13 +146,13 @@ export default function TaskDetail({
     try {
       const response = await fetch(`/api/tasks/${task.id}`, { method: 'DELETE' });
       if (!response.ok) {
-        setError(await failMessage(response, 'Görev silinemedi.'));
+        setError(await failMessage(response, t.task.error.deleteFailed));
         return;
       }
       router.push('/');
       router.refresh();
     } catch {
-      setError('Sunucuya ulaşılamadı. Görev silinemedi.');
+      setError(t.task.error.deleteOffline);
     } finally {
       setBusy(false);
     }
@@ -149,7 +161,7 @@ export default function TaskDetail({
   /** Aktivite satırındaki from/to değerlerini okunur hale getirir. */
   function prettyValue(action: string, value: string | null): string | null {
     if (!value) return null;
-    if (action === 'status' && isStatus(value)) return STATUS_STYLES[value].label;
+    if (action === 'status' && isStatus(value)) return t.common.status[value];
     if (action === 'assign' || action === 'claim') return nameOf(value);
     return value;
   }
@@ -161,7 +173,7 @@ export default function TaskDetail({
           href="/"
           className="text-sm text-slate-500 hover:underline dark:text-slate-400"
         >
-          ← Panoya dön
+          {`← ${t.task.backToBoard}`}
         </Link>
       </div>
 
@@ -174,12 +186,12 @@ export default function TaskDetail({
           </span>
           {day ? (
             <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              Gün {day.day_no} · {shortWeekday(day.weekday)} {shortDate(day.date)}
+              {dayBadge}
             </span>
           ) : null}
           {task.is_blocker ? (
             <span className="rounded-md bg-rose-600 px-1.5 py-0.5 text-[11px] font-bold text-white">
-              🔴 BLOKER
+              {`🔴 ${t.common.blocker}`}
             </span>
           ) : null}
         </div>
@@ -188,14 +200,14 @@ export default function TaskDetail({
 
         {origin ? (
           <p className="mt-2 rounded-lg bg-indigo-50 p-2 text-sm text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">
-            {`🤝 Devralınabilir iş · ${origin.label} track'inden geldi.`}
+            {t.task.inheritedFrom(origin.label)}
           </p>
         ) : null}
 
         {task.detail ? (
           <div className="mt-3">
             <h2 className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-              Açıklama
+              {t.task.detailHeading}
             </h2>
             <p className="mt-1 text-sm whitespace-pre-wrap">{task.detail}</p>
           </div>
@@ -204,7 +216,7 @@ export default function TaskDetail({
         {task.output ? (
           <div className="mt-3">
             <h2 className="text-xs font-semibold text-slate-500 uppercase dark:text-slate-400">
-              Beklenen çıktı
+              {t.task.outputHeading}
             </h2>
             <p className="mt-1 text-sm">{task.output}</p>
           </div>
@@ -221,7 +233,7 @@ export default function TaskDetail({
       ) : null}
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-semibold">Durum</h2>
+        <h2 className="text-base font-semibold">{t.task.statusHeading}</h2>
         <div className="mt-2 flex flex-wrap gap-2">
           {STATUS_ORDER.map((status) => {
             const active = task.status === status;
@@ -241,13 +253,13 @@ export default function TaskDetail({
                   className={`h-2 w-2 rounded-full ${STATUS_STYLES[status].dot}`}
                   aria-hidden="true"
                 />
-                {STATUS_STYLES[status].label}
+                {t.common.status[status]}
               </button>
             );
           })}
         </div>
 
-        <h2 className="mt-5 text-base font-semibold">Atama</h2>
+        <h2 className="mt-5 text-base font-semibold">{t.task.assignHeading}</h2>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <select
             value={task.assignee ?? ''}
@@ -265,7 +277,7 @@ export default function TaskDetail({
             }}
             className="h-11 min-w-48 rounded-lg border border-slate-300 bg-transparent px-2 text-sm dark:border-slate-700"
           >
-            <option value="">Atanmadı</option>
+            <option value="">{t.common.unassigned}</option>
             {users.map((user) => (
               <option key={user.email} value={user.email}>
                 {user.name} · {trackStyle(user.track).label}
@@ -281,7 +293,7 @@ export default function TaskDetail({
               }
               className="h-11 rounded-lg border border-slate-300 px-3 text-sm dark:border-slate-700"
             >
-              Atamayı kaldır
+              {t.task.clearAssignee}
             </button>
           ) : null}
           {task.assignee !== me.email ? (
@@ -296,15 +308,15 @@ export default function TaskDetail({
               }
               className="h-11 rounded-lg border border-indigo-400 px-3 text-sm font-medium text-indigo-700 dark:border-indigo-700 dark:text-indigo-300"
             >
-              Bana ata
+              {t.task.assignToMe}
             </button>
           ) : null}
         </div>
 
-        <h2 className="mt-5 text-base font-semibold">Etiketler</h2>
+        <h2 className="mt-5 text-base font-semibold">{t.task.labelsHeading}</h2>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {task.labels.length === 0 ? (
-            <span className="text-sm text-slate-500 dark:text-slate-400">Etiket yok.</span>
+            <span className="text-sm text-slate-500 dark:text-slate-400">{t.task.noLabels}</span>
           ) : (
             task.labels.map((label) => (
               <span
@@ -316,7 +328,7 @@ export default function TaskDetail({
                   type="button"
                   disabled={busy}
                   onClick={() => void changeLabel(label, false)}
-                  aria-label={`${label} etiketini kaldır`}
+                  aria-label={t.task.removeLabelAria(label)}
                   className="flex h-8 w-8 items-center justify-center rounded text-slate-500 hover:text-rose-600"
                 >
                   ×
@@ -335,7 +347,7 @@ export default function TaskDetail({
                 void changeLabel(newLabel, true);
               }
             }}
-            placeholder="Yeni etiket"
+            placeholder={t.task.newLabelPlaceholder}
             className="h-11 flex-1 rounded-lg border border-slate-300 bg-transparent px-3 text-sm dark:border-slate-700"
           />
           <button
@@ -344,7 +356,7 @@ export default function TaskDetail({
             onClick={() => void changeLabel(newLabel, true)}
             className="h-11 rounded-lg border border-slate-300 px-3 text-sm disabled:opacity-50 dark:border-slate-700"
           >
-            Ekle
+            {t.common.action.add}
           </button>
         </div>
       </section>
@@ -357,10 +369,10 @@ export default function TaskDetail({
       />
 
       <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="text-base font-semibold">Bu görevin geçmişi</h2>
+        <h2 className="text-base font-semibold">{t.task.historyHeading}</h2>
         {history.length === 0 ? (
           <div className="mt-3">
-            <EmptyState>Bu görev için henüz kayıt yok.</EmptyState>
+            <EmptyState>{t.task.historyEmpty}</EmptyState>
           </div>
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
@@ -380,7 +392,7 @@ export default function TaskDetail({
                     </span>
                   ) : null}
                   <span className="text-xs text-slate-400 dark:text-slate-500">
-                    · {activityTime(entry.created_at, todayISO)}
+                    · {activityTime(entry.created_at, todayISO, locale)}
                   </span>
                 </li>
               );
@@ -392,18 +404,16 @@ export default function TaskDetail({
       {me.isAdmin ? (
         <section className="rounded-lg border border-rose-300 bg-rose-50 p-4 dark:border-rose-900 dark:bg-rose-950">
           <h2 className="text-base font-semibold text-rose-800 dark:text-rose-200">
-            Yönetici işlemi
+            {t.task.adminHeading}
           </h2>
-          <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">
-            Silinen görev geri getirilemez; yorumları ve etiketleri de silinir.
-          </p>
+          <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">{t.task.deleteWarning}</p>
           <button
             type="button"
             disabled={busy}
             onClick={() => void removeTask()}
             className="mt-3 h-11 rounded-lg bg-rose-600 px-4 text-sm font-medium text-white disabled:opacity-60"
           >
-            Görevi sil
+            {t.task.deleteTask}
           </button>
         </section>
       ) : null}

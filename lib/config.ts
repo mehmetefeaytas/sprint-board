@@ -57,13 +57,6 @@ const PALETTE: Record<TrackColor, { accent: string; chip: string }> = {
 
 export const STATUSES: readonly Status[] = ['todo', 'in_progress', 'blocked', 'done'];
 
-export const STATUS_LABELS: Record<Status, string> = {
-  todo: 'Yapılacak',
-  in_progress: 'Devam ediyor',
-  blocked: 'Bloke',
-  done: 'Tamamlandı',
-};
-
 const KEY_PATTERN = /^[A-Z0-9_]+$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -73,6 +66,10 @@ function validate(config: SprintConfig): string[] {
 
   if (typeof config.projectName !== 'string' || config.projectName.trim() === '') {
     note('projectName boş olamaz.');
+  }
+
+  if (config.defaultLocale !== undefined && !['tr', 'en'].includes(config.defaultLocale)) {
+    note(`defaultLocale "${config.defaultLocale}" geçersiz — 'tr' veya 'en' olmalı.`);
   }
 
   // ── Track'ler ──────────────────────────────────────────────────────────────
@@ -128,6 +125,9 @@ function validate(config: SprintConfig): string[] {
     dayNumbers.add(day.day_no);
     if (!DATE_PATTERN.test(day.date)) {
       note(`Gün ${day.day_no} için tarih "${day.date}" YYYY-MM-DD biçiminde değil.`);
+    }
+    if (day.weekday !== undefined && day.weekday.trim() === '') {
+      note(`Gün ${day.day_no} için weekday boş metin — alanı ya doldur ya hiç yazma.`);
     }
     if (day.theme.trim() === '') note(`Gün ${day.day_no} için theme boş.`);
   }
@@ -229,7 +229,7 @@ export const SPRINT_DAYS = raw.days
   .map((day) => ({
     day_no: day.day_no,
     date: day.date,
-    weekday: day.weekday,
+    weekday: day.weekday ?? null,
     theme: day.theme,
     milestone: day.milestone ?? null,
   }))

@@ -1,13 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PROJECT_NAME } from '@/lib/config';
+import { useDict } from '@/lib/i18n/provider';
 
 type Lookup = { exists: boolean; isAdmin: boolean };
 
 export default function LoginForm() {
   const router = useRouter();
+  const t = useDict();
   const passwordRef = useRef<HTMLInputElement>(null);
 
   const [email, setEmail] = useState('');
@@ -17,15 +19,20 @@ export default function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function lookup(mail: string): Promise<Lookup | null> {
-    const response = await fetch(`/api/auth/login?email=${encodeURIComponent(mail)}`);
-    if (!response.ok) {
-      setError('E-posta kontrol edilemedi. Tekrar deneyin.');
-      return null;
-    }
-    const body = (await response.json()) as Partial<Lookup>;
-    return { exists: body.exists === true, isAdmin: body.isAdmin === true };
-  }
+  // useCallback şart: hata mesajı sözlükten geldiği için lookup artık dile
+  // bağlı, yani her çizimde yeniden yaratılsa aşağıdaki effect boşuna koşardı.
+  const lookup = useCallback(
+    async (mail: string): Promise<Lookup | null> => {
+      const response = await fetch(`/api/auth/login?email=${encodeURIComponent(mail)}`);
+      if (!response.ok) {
+        setError(t.auth.error.lookupFailed);
+        return null;
+      }
+      const body = (await response.json()) as Partial<Lookup>;
+      return { exists: body.exists === true, isAdmin: body.isAdmin === true };
+    },
+    [t],
+  );
 
   // Yazma durduktan kısa süre sonra sessizce kontrol: kişi yönetici mi?
   // Bilinçli olarak onBlur DEĞİL — alandan çıkıp düğmeye basıldığında blur'un
@@ -45,8 +52,7 @@ export default function LoginForm() {
       }
     }, 400);
     return () => window.clearTimeout(timer);
-    // lookup bileşen kapsamında sabit; yalnızca e-posta değişimi izlenir.
-  }, [email, checkedEmail]);
+  }, [email, checkedEmail, lookup]);
 
   // Şifre alanı açıldığında imleci oraya al.
   useEffect(() => {
@@ -58,7 +64,7 @@ export default function LoginForm() {
     const mail = email.trim().toLowerCase();
     setError(null);
     if (!mail) {
-      setError('E-posta adresinizi yazın.');
+      setError(t.auth.error.emailRequired);
       return;
     }
 
@@ -70,7 +76,7 @@ export default function LoginForm() {
         if (!info) return;
         setCheckedEmail(mail);
         if (!info.exists) {
-          setError('Bu e-posta ekip listesinde yok. Sistem yöneticisinden eklenmesini isteyin.');
+          setError(t.auth.error.notOnTeam);
           setNeedsPassword(false);
           return;
         }
@@ -78,14 +84,14 @@ export default function LoginForm() {
         setNeedsPassword(info.isAdmin);
         if (info.isAdmin && !password) {
           window.setTimeout(() => passwordRef.current?.focus(), 0);
-          setError('Bu hesap için şifre gerekli.');
+          setError(t.auth.error.passwordRequired);
           return;
         }
       }
 
       if (admin && !password) {
         window.setTimeout(() => passwordRef.current?.focus(), 0);
-        setError('Bu hesap için şifre gerekli.');
+        setError(t.auth.error.passwordRequired);
         return;
       }
 
@@ -102,16 +108,13 @@ export default function LoginForm() {
             ? String((body as { error: unknown }).error)
             : null;
         if (response.status === 403) {
-          setError(
-            fromServer ??
-              'Bu e-posta ekip listesinde yok. Sistem yöneticisinden eklenmesini isteyin.',
-          );
+          setError(fromServer ?? t.auth.error.notOnTeam);
         } else if (response.status === 401) {
-          setError(fromServer ?? 'Şifre hatalı.');
+          setError(fromServer ?? t.auth.error.wrongPassword);
           setNeedsPassword(true);
           window.setTimeout(() => passwordRef.current?.focus(), 0);
         } else {
-          setError(fromServer ?? 'Giriş yapılamadı. Tekrar deneyin.');
+          setError(fromServer ?? t.auth.error.failed);
         }
         return;
       }
@@ -119,7 +122,7 @@ export default function LoginForm() {
       router.push('/');
       router.refresh();
     } catch {
-      setError('Sunucuya ulaşılamadı. Bağlantınızı kontrol edin.');
+      setError(t.common.error.network);
     } finally {
       setBusy(false);
     }
@@ -131,12 +134,10 @@ export default function LoginForm() {
       className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900"
     >
       <h1 className="text-xl font-semibold">{PROJECT_NAME}</h1>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-        E-posta adresinizle giriş yapın.
-      </p>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t.auth.subtitle}</p>
 
       <label className="mt-5 block">
-        <span className="text-sm font-medium">E-posta</span>
+        <span className="text-sm font-medium">{t.auth.emailLabel}</span>
         <input
           type="email"
           inputMode="email"
@@ -144,14 +145,14 @@ export default function LoginForm() {
           autoFocus
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          placeholder="ad@ornek.com"
+          placeholder={t.auth.emailPlaceholder}
           className="mt-1 h-12 w-full rounded-lg border border-slate-300 bg-transparent px-3 text-base dark:border-slate-700"
         />
       </label>
 
       {needsPassword ? (
         <label className="mt-3 block">
-          <span className="text-sm font-medium">Şifre</span>
+          <span className="text-sm font-medium">{t.auth.passwordLabel}</span>
           <input
             ref={passwordRef}
             type="password"
@@ -161,7 +162,7 @@ export default function LoginForm() {
             className="mt-1 h-12 w-full rounded-lg border border-slate-300 bg-transparent px-3 text-base dark:border-slate-700"
           />
           <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-            Bu hesap sistem yöneticisi olduğu için şifre isteniyor.
+            {t.auth.passwordHint}
           </span>
         </label>
       ) : null}
@@ -180,11 +181,11 @@ export default function LoginForm() {
         disabled={busy}
         className="mt-5 h-12 w-full rounded-lg bg-slate-900 text-sm font-medium text-white disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900"
       >
-        {busy ? 'Giriş yapılıyor…' : 'Giriş yap'}
+        {busy ? t.auth.signingIn : t.auth.signIn}
       </button>
 
       <p className="mt-4 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-        Giriş yalnızca kim ne yaptı takibi için; şifre yalnızca sistem yöneticisinden istenir.
+        {t.auth.footnote}
       </p>
     </form>
   );

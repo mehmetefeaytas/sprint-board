@@ -12,6 +12,7 @@ import {
 } from '@/lib/types';
 import { TRACKS } from '@/lib/config';
 import { shortDate, shortWeekday } from '../format';
+import { useDict, useLocale } from '@/lib/i18n/provider';
 import { EmptyState } from './notice';
 import NewTaskForm from './new-task-form';
 import SummaryStrip from './summary-strip';
@@ -28,6 +29,8 @@ export default function BoardView({
   todayISO: string;
 }) {
   const router = useRouter();
+  const t = useDict();
+  const locale = useLocale();
   const { days, users, me } = payload;
 
   const [tasks, setTasks] = useState<TaskRow[]>(payload.tasks);
@@ -69,7 +72,7 @@ export default function BoardView({
         const message =
           body && typeof body === 'object' && 'error' in body
             ? String((body as { error: unknown }).error)
-            : 'Değişiklik kaydedilemedi.';
+            : t.board.saveFailed;
         throw new Error(message);
       }
       const updated = (await response.json()) as TaskRow;
@@ -78,7 +81,7 @@ export default function BoardView({
     } catch (caught) {
       // İyimser güncellemeyi geri al.
       setTasks(previous);
-      setError(caught instanceof Error ? caught.message : 'Değişiklik kaydedilemedi.');
+      setError(caught instanceof Error ? caught.message : t.board.saveFailed);
     } finally {
       setBusyId(null);
     }
@@ -113,7 +116,7 @@ export default function BoardView({
         <div
           className="inline-flex rounded-lg border border-slate-300 p-0.5 dark:border-slate-700"
           role="tablist"
-          aria-label="Görünüm"
+          aria-label={t.board.viewSwitcher}
         >
           <button
             type="button"
@@ -126,7 +129,7 @@ export default function BoardView({
                 : 'text-slate-600 dark:text-slate-300'
             }`}
           >
-            Takvim
+            {t.board.calendarView}
           </button>
           <button
             type="button"
@@ -139,7 +142,7 @@ export default function BoardView({
                 : 'text-slate-600 dark:text-slate-300'
             }`}
           >
-            Pano
+            {t.board.boardView}
           </button>
         </div>
 
@@ -148,7 +151,7 @@ export default function BoardView({
           onClick={() => setFormOpen(true)}
           className="h-11 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white dark:bg-slate-100 dark:text-slate-900"
         >
-          + Yeni görev
+          {t.board.newTask}
         </button>
       </div>
 
@@ -169,15 +172,15 @@ export default function BoardView({
                       : 'border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-200'
                   }`}
                 >
-                  <span>Gün {day.day_no}</span>
+                  <span>{t.board.day(day.day_no)}</span>
                   <span className="opacity-70">·</span>
                   <span className="opacity-90">
-                    {shortWeekday(day.weekday)} {shortDate(day.date)}
+                    {`${shortWeekday(day.date, day.weekday, locale)} ${shortDate(day.date, locale)}`}
                   </span>
-                  {day.milestone ? <span aria-label="Kilometre taşı">🎯</span> : null}
+                  {day.milestone ? <span aria-label={t.common.milestone}>🎯</span> : null}
                   {day.date === todayISO ? (
                     <span className="rounded bg-sky-500 px-1 text-[10px] font-bold text-white">
-                      BUGÜN
+                      {t.common.today}
                     </span>
                   ) : null}
                 </button>
@@ -197,7 +200,7 @@ export default function BoardView({
           ) : null}
 
           {dayTasks.length === 0 ? (
-            <EmptyState>Bu günde görev yok. Üstteki “+ Yeni görev” ile ekleyebilirsiniz.</EmptyState>
+            <EmptyState>{t.board.emptyDay}</EmptyState>
           ) : (
             <div className="space-y-4">
               {TRACK_ORDER.map((track) => {
@@ -213,7 +216,7 @@ export default function BoardView({
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <h3 className="text-sm font-semibold">{style.label}</h3>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {trackDone}/{trackTasks.length} tamam
+                        {t.board.trackDone(trackDone, trackTasks.length)}
                       </span>
                     </div>
                     <div className="grid gap-2 lg:grid-cols-2">
@@ -233,14 +236,13 @@ export default function BoardView({
           )}
 
           <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-base font-semibold">🤝 Devralınabilir işler</h2>
+            <h2 className="text-base font-semibold">{t.board.handoverHeading}</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Geldikleri track&apos;in kapasitesi dolduğu için bu işler devralınmayı
-              bekliyor; başka bir track&apos;ten biri üstlenebilir.
+              {t.board.handoverIntro}
             </p>
             {handoverTasks.length === 0 ? (
               <div className="mt-3">
-                <EmptyState>Şu anda devralınmayı bekleyen iş yok.</EmptyState>
+                <EmptyState>{t.board.handoverEmpty}</EmptyState>
               </div>
             ) : (
               <ul className="mt-3 space-y-2">
@@ -251,16 +253,16 @@ export default function BoardView({
                       busy={busyId === task.id}
                       onToggleDone={toggleDone}
                       showTrack
-                      dayLabel={`Gün ${task.day_no}`}
+                      dayLabel={t.board.day(task.day_no)}
                     />
                     <div className="flex items-center gap-2 pl-1">
                       {task.assignee === me.email ? (
                         <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
-                          Bu işi devraldınız.
+                          {t.board.handoverMine}
                         </span>
                       ) : task.assignee ? (
                         <span className="text-xs text-slate-500 dark:text-slate-400">
-                          {task.assignee_name} devraldı.
+                          {t.board.handoverBy(task.assignee_name ?? '')}
                         </span>
                       ) : (
                         <button
@@ -269,7 +271,7 @@ export default function BoardView({
                           disabled={busyId === task.id}
                           className="h-11 rounded-lg border border-indigo-400 px-3 text-sm font-medium text-indigo-700 hover:bg-indigo-50 disabled:opacity-60 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950"
                         >
-                          {busyId === task.id ? 'Devralınıyor…' : 'Bu işi devral'}
+                          {busyId === task.id ? t.board.claiming : t.board.claim}
                         </button>
                       )}
                     </div>
@@ -291,14 +293,14 @@ export default function BoardView({
               >
                 <div className="mb-2 flex items-center gap-2">
                   <span className={`h-2 w-2 rounded-full ${style.dot}`} aria-hidden="true" />
-                  <h3 className="text-sm font-semibold">{style.label}</h3>
+                  <h3 className="text-sm font-semibold">{t.common.status[status]}</h3>
                   <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
                     {columnTasks.length}
                   </span>
                 </div>
                 {columnTasks.length === 0 ? (
                   <p className="py-4 text-center text-xs text-slate-400 dark:text-slate-500">
-                    Bu kolonda görev yok.
+                    {t.board.emptyColumn}
                   </p>
                 ) : (
                   <div className="space-y-2">
@@ -309,7 +311,7 @@ export default function BoardView({
                         busy={busyId === task.id}
                         onToggleDone={toggleDone}
                         showTrack
-                        dayLabel={`Gün ${task.day_no}`}
+                        dayLabel={t.board.day(task.day_no)}
                       />
                     ))}
                   </div>
@@ -343,7 +345,7 @@ export default function BoardView({
           <button
             type="button"
             onClick={() => setError(null)}
-            aria-label="Uyarıyı kapat"
+            aria-label={t.board.dismissError}
             className="font-bold"
           >
             ✕

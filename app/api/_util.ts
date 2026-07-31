@@ -5,9 +5,25 @@ import { db } from '@/lib/db';
 import { getSession, type SessionUser } from '@/lib/session';
 import { STATUSES, isKnownTrack } from '@/lib/config';
 import type { Status, TaskRow, Track } from '@/lib/types';
+import { getDict } from '@/lib/i18n/server';
+import type { Dictionary } from '@/lib/i18n';
 
 export function fail(message: string, status: number): Response {
   return Response.json({ error: message }, { status });
+}
+
+/**
+ * Dile duyarlı hata yanıtı. Mesajı seçici bir fonksiyonla veriyoruz ki anahtar
+ * yolu TypeScript tarafından denetlensin — yazım hatası derlemede çıkar:
+ *
+ *   return failT((m) => m.task.notFound, 404);
+ */
+export async function failT(
+  pick: (messages: Dictionary['api']) => string,
+  status: number,
+): Promise<Response> {
+  const { t } = await getDict();
+  return fail(pick(t.api), status);
 }
 
 export async function readJson<T>(request: Request): Promise<T | null> {
@@ -24,7 +40,7 @@ export type Guard = { user: SessionUser } | { response: Response };
 
 export async function auth(): Promise<Guard> {
   const user = await getSession();
-  if (!user) return { response: fail('Oturum bulunamadı.', 401) };
+  if (!user) return { response: await failT((m) => m.session.missing, 401) };
   return { user };
 }
 
@@ -33,7 +49,7 @@ export async function authAdmin(): Promise<Guard> {
   const result = await auth();
   if ('response' in result) return result;
   if (!result.user.isAdmin) {
-    return { response: fail('Bu işlem için yönetici yetkisi gerekli.', 403) };
+    return { response: await failT((m) => m.session.adminRequired, 403) };
   }
   return result;
 }

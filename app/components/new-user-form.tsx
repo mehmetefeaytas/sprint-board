@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { DEFAULT_TRACK, TRACKS } from '@/lib/config';
 import { trackStyle, type Track } from '@/lib/types';
+import { useDict } from '@/lib/i18n/provider';
 
 export default function NewUserForm() {
   const router = useRouter();
+  const t = useDict();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [track, setTrack] = useState<Track>(DEFAULT_TRACK);
@@ -20,7 +22,7 @@ export default function NewUserForm() {
     setError(null);
     setDone(null);
     if (!name.trim() || !email.trim()) {
-      setError('Ad ve e-posta zorunlu.');
+      setError(t.team.error.nameEmailRequired);
       return;
     }
     setSaving(true);
@@ -40,17 +42,17 @@ export default function NewUserForm() {
         setError(
           payload && typeof payload === 'object' && 'error' in payload
             ? String((payload as { error: unknown }).error)
-            : 'Kişi eklenemedi.',
+            : t.team.error.addFailed,
         );
         return;
       }
-      setDone(`${name.trim()} ekibe eklendi.`);
+      setDone(t.team.added(name.trim()));
       setName('');
       setEmail('');
       setIsAdmin(false);
       router.refresh();
     } catch {
-      setError('Sunucuya ulaşılamadı. Kişi eklenemedi.');
+      setError(t.team.error.addOffline);
     } finally {
       setSaving(false);
     }
@@ -61,14 +63,14 @@ export default function NewUserForm() {
       onSubmit={submit}
       className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900"
     >
-      <h2 className="text-base font-semibold">Kişi ekle</h2>
-      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-        Yalnızca sistem yöneticisi ekleyebilir.
-      </p>
+      <h2 className="text-base font-semibold">{t.team.addHeading}</h2>
+      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t.team.addHint}</p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <label className="block">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Ad</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.team.nameLabel}
+          </span>
           <input
             value={name}
             onChange={(event) => setName(event.target.value)}
@@ -76,7 +78,9 @@ export default function NewUserForm() {
           />
         </label>
         <label className="block">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">E-posta</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.team.emailLabel}
+          </span>
           <input
             type="email"
             inputMode="email"
@@ -86,7 +90,9 @@ export default function NewUserForm() {
           />
         </label>
         <label className="block">
-          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Track</span>
+          <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            {t.team.trackLabel}
+          </span>
           <select
             value={track}
             onChange={(event) => setTrack(event.target.value as Track)}
@@ -106,7 +112,7 @@ export default function NewUserForm() {
             onChange={(event) => setIsAdmin(event.target.checked)}
             className="h-5 w-5"
           />
-          <span className="text-sm">Sistem yöneticisi</span>
+          <span className="text-sm">{t.team.adminCheckbox}</span>
         </label>
       </div>
 
@@ -129,7 +135,7 @@ export default function NewUserForm() {
         disabled={saving}
         className="mt-3 h-11 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white disabled:opacity-60 dark:bg-slate-100 dark:text-slate-900"
       >
-        {saving ? 'Ekleniyor…' : 'Ekibe ekle'}
+        {saving ? t.team.adding : t.team.addSubmit}
       </button>
     </form>
   );

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { CommentRow, UserRow } from '@/lib/types';
+import { useDict, useLocale } from '@/lib/i18n/provider';
 import { activityTime, splitMentions } from '../format';
 import { EmptyState } from './notice';
 
@@ -22,6 +23,8 @@ function lower(value: string): string {
 
 export default function CommentBox({ taskId, initialComments, users, todayISO }: Props) {
   const router = useRouter();
+  const t = useDict();
+  const locale = useLocale();
   const areaRef = useRef<HTMLTextAreaElement>(null);
   const [comments, setComments] = useState<CommentRow[]>(initialComments);
   const [body, setBody] = useState('');
@@ -77,7 +80,7 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
         const message =
           payload && typeof payload === 'object' && 'error' in payload
             ? String((payload as { error: unknown }).error)
-            : 'Yorum gönderilemedi.';
+            : t.task.error.commentFailed;
         setError(message);
         return;
       }
@@ -86,7 +89,7 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
       setBody('');
       router.refresh();
     } catch {
-      setError('Sunucuya ulaşılamadı. Yorum gönderilemedi.');
+      setError(t.task.error.commentOffline);
     } finally {
       setSending(false);
     }
@@ -94,11 +97,11 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
 
   return (
     <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-      <h2 className="text-base font-semibold">Yorumlar ({comments.length})</h2>
+      <h2 className="text-base font-semibold">{t.task.commentsHeading(comments.length)}</h2>
 
       {comments.length === 0 ? (
         <div className="mt-3">
-          <EmptyState>Henüz yorum yok. İlk notu siz yazın.</EmptyState>
+          <EmptyState>{t.task.commentsEmpty}</EmptyState>
         </div>
       ) : (
         <ul className="mt-3 space-y-3">
@@ -110,7 +113,7 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-sm font-medium">{comment.author_name}</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {activityTime(comment.created_at, todayISO)}
+                  {activityTime(comment.created_at, todayISO, locale)}
                 </span>
               </div>
               <p className="mt-1 text-sm whitespace-pre-wrap">
@@ -135,7 +138,7 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
       <form onSubmit={submit} className="relative mt-4">
         <label className="block">
           <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
-            Yeni yorum — birini etiketlemek için @ yazın
+            {t.task.commentFieldLabel}
           </span>
           <textarea
             ref={areaRef}
@@ -166,7 +169,10 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
         </label>
 
         {suggestions.length > 0 ? (
-          <ul className="absolute right-0 bottom-14 left-0 z-20 max-h-48 overflow-y-auto rounded-lg border border-slate-300 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
+          <ul
+            aria-label={t.task.mentionSuggestions}
+            className="absolute right-0 bottom-14 left-0 z-20 max-h-48 overflow-y-auto rounded-lg border border-slate-300 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
+          >
             {suggestions.map((user, index) => (
               <li key={user.email}>
                 <button
@@ -198,7 +204,7 @@ export default function CommentBox({ taskId, initialComments, users, todayISO }:
           disabled={sending || !body.trim()}
           className="mt-2 h-11 rounded-lg bg-slate-900 px-4 text-sm font-medium text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
         >
-          {sending ? 'Gönderiliyor…' : 'Yorum ekle'}
+          {sending ? t.task.sending : t.task.addComment}
         </button>
       </form>
     </section>

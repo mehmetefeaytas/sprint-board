@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import type { BoardPayload, DayRow, UserRow } from '@/lib/types';
-import { auth, fail, fetchTasks } from '../_util';
+import { auth, failT, fetchTasks } from '../_util';
 
 async function fetchDays(): Promise<DayRow[]> {
   const sql = db();
@@ -32,7 +32,7 @@ export async function GET(): Promise<Response> {
 
     // track/is_admin token'da eskimiş olabilir; veritabanındaki satır esas.
     const meRow = users.find((u) => u.email === guard.user.email);
-    if (!meRow) return fail('Kullanıcı ekip listesinde bulunamadı.', 401);
+    if (!meRow) return failT((m) => m.auth.userNotOnTeam, 401);
 
     const payload: BoardPayload = {
       me: { email: meRow.email, name: meRow.name, track: meRow.track, isAdmin: meRow.is_admin },
@@ -42,6 +42,6 @@ export async function GET(): Promise<Response> {
     };
     return Response.json(payload);
   } catch {
-    return fail('Board verisi okunamadı.', 500);
+    return failT((m) => m.board.readFailed, 500);
   }
 }

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { logActivity } from '@/lib/audit';
 import type { CommentRow } from '@/lib/types';
-import { auth, fail, parseId, readJson } from '../../../_util';
+import { auth, failT, parseId, readJson } from '../../../_util';
 
 type CommentBody = { body?: unknown };
 
@@ -86,12 +86,12 @@ export async function GET(
   if ('response' in guard) return guard.response;
 
   const id = parseId((await params).id);
-  if (id === null) return fail('Geçersiz görev numarası.', 400);
+  if (id === null) return failT((m) => m.request.invalidTaskId, 400);
 
   try {
     return Response.json(await fetchComments(id));
   } catch {
-    return fail('Yorumlar okunamadı.', 500);
+    return failT((m) => m.comment.readFailed, 500);
   }
 }
 
@@ -103,11 +103,11 @@ export async function POST(
   if ('response' in guard) return guard.response;
 
   const id = parseId((await params).id);
-  if (id === null) return fail('Geçersiz görev numarası.', 400);
+  if (id === null) return failT((m) => m.request.invalidTaskId, 400);
 
   const payload = await readJson<CommentBody>(request);
   const text = typeof payload?.body === 'string' ? payload.body.trim() : '';
-  if (text === '') return fail('Yorum boş olamaz.', 400);
+  if (text === '') return failT((m) => m.comment.empty, 400);
 
   try {
     const sql = db();
@@ -116,7 +116,7 @@ export async function POST(
       SELECT id, code FROM tasks WHERE id = ${id}
     `) as unknown as { id: number; code: string }[];
     const task = taskRows[0];
-    if (!task) return fail('Görev bulunamadı.', 404);
+    if (!task) return failT((m) => m.task.notFound, 404);
 
     const inserted = (await sql`
       INSERT INTO comments (task_id, author, body)
@@ -124,7 +124,7 @@ export async function POST(
       RETURNING id
     `) as unknown as { id: number }[];
     const commentId = inserted[0]?.id;
-    if (commentId === undefined) return fail('Yorum kaydedilemedi.', 500);
+    if (commentId === undefined) return failT((m) => m.comment.saveFailed, 500);
 
     const users = (await sql`SELECT email, name FROM users`) as unknown as {
       email: string;
@@ -146,9 +146,9 @@ export async function POST(
     });
 
     const comment = await fetchComment(commentId);
-    if (!comment) return fail('Yorum kaydedildi ama okunamadı.', 500);
+    if (!comment) return failT((m) => m.comment.savedButUnreadable, 500);
     return Response.json(comment, { status: 201 });
   } catch {
-    return fail('Yorum kaydedilemedi.', 500);
+    return failT((m) => m.comment.saveFailed, 500);
   }
 }

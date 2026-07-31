@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { logActivity } from '@/lib/audit';
 import { setSessionCookie, signSession, type SessionUser } from '@/lib/session';
 import type { UserRow } from '@/lib/types';
-import { fail, normalizeEmail, readJson } from '../../_util';
+import { failT, normalizeEmail, readJson } from '../../_util';
 
 type LoginBody = { email?: unknown; password?: unknown };
 
@@ -34,25 +34,25 @@ export async function GET(request: Request): Promise<Response> {
     const user = await findUser(email);
     return Response.json({ exists: user !== null, isAdmin: user?.is_admin === true });
   } catch {
-    return fail('Kullanıcı bilgisi okunamadı.', 500);
+    return failT((m) => m.auth.userReadFailed, 500);
   }
 }
 
 export async function POST(request: Request): Promise<Response> {
   const body = await readJson<LoginBody>(request);
   const email = normalizeEmail(body?.email);
-  if (!email) return fail('E-posta gerekli.', 400);
+  if (!email) return failT((m) => m.auth.emailRequired, 400);
 
   try {
     const user = await findUser(email);
-    if (!user) return fail('Bu e-posta ekip listesinde yok.', 403);
+    if (!user) return failT((m) => m.auth.notOnTeam, 403);
 
     if (user.is_admin) {
       const expected = process.env.ADMIN_PASSWORD;
-      if (!expected) return fail('Yönetici şifresi sunucuda tanımlı değil.', 500);
+      if (!expected) return failT((m) => m.auth.adminPasswordMissing, 500);
       const given = typeof body?.password === 'string' ? body.password : '';
       if (given === '' || !constantTimeEqual(given, expected)) {
-        return fail('Şifre hatalı.', 401);
+        return failT((m) => m.auth.wrongPassword, 401);
       }
     }
 
@@ -67,6 +67,6 @@ export async function POST(request: Request): Promise<Response> {
 
     return Response.json({ ok: true, user: session });
   } catch {
-    return fail('Giriş yapılamadı.', 500);
+    return failT((m) => m.auth.loginFailed, 500);
   }
 }

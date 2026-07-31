@@ -1,165 +1,176 @@
-# Sprint Panosu
+# Sprint Board
 
 [![CI](https://github.com/mehmetefeaytas/sprint-board/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetefeaytas/sprint-board/actions/workflows/ci.yml)
-[![Lisans: MIT](https://img.shields.io/badge/lisans-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
 [![Neon Postgres](https://img.shields.io/badge/Neon-Postgres-00e599.svg)](https://neon.tech)
-[![MCP](https://img.shields.io/badge/MCP-sunucusu%20dahil-6f42c1.svg)](mcp/README.md)
+[![MCP](https://img.shields.io/badge/MCP-server%20included-6f42c1.svg)](mcp/README.md)
 
-**Türkçe** · [English](README.en.md)
+[Türkçe](README.tr.md) · **English**
 
-Küçük ekipler için hafif bir sprint takip panosu. Jira'yı kurup yapılandırmaya
-değmeyecek işlerde — 3-4 kişilik bir ekibin bir haftalık sprint'inde, bir
-bootcamp projesinde, bir staj programında — "kim ne yaptı" sorusunun cevabını
-kaybetmeden hızlıca çalışmaya başlamak için.
+A lightweight sprint tracker for small teams. For the kind of work where standing up
+and configuring Jira isn't worth it — a one-week sprint for a team of three or four,
+a bootcamp project, an internship program — where you want to start working quickly
+without losing the answer to "who did what".
 
-İki şeye odaklanır:
+It focuses on two things:
 
-- **Denetim izi.** Her durum değişikliği, atama, yorum ve etiket tek bir yerden
-  (`lib/audit.ts`) `activity_log` tablosuna yazılır. Aktivite ekranı bunu
-  kişiye ve eylem tipine göre filtreleyerek gösterir.
-- **Hızlı benimseme.** Giriş yalnızca e-posta ile. Kayıt yok, davet e-postası
-  yok, şifre yok. Şifre yalnızca yönetici hesaplarından istenir. Ekip
-  listesinde olmayan bir e-posta giremez.
+- **An audit trail.** Every status change, assignment, comment and label is written
+  to the `activity_log` table from a single place (`lib/audit.ts`). The activity
+  screen shows that log, filterable by person and action type.
+- **Fast adoption.** Signing in takes an email address and nothing else. No
+  registration, no invitation emails, no passwords. A password is only asked of admin
+  accounts. An email that isn't on the team list can't get in.
 
-Arayüz tamamen Türkçe, mobil uyumlu, açık/koyu temaya uyum sağlıyor.
+The interface is entirely in Turkish, works on mobile, and follows the light/dark
+theme.
 
-> Giriş bir kolaylık mekanizmasıdır, sert bir güvenlik sınırı değil. Panoya
-> gerçekten gizli bilgi koymayın.
+> Sign-in is a convenience mechanism, not a hard security boundary. Don't put
+> genuinely confidential information on the board.
 
-![Takvim görünümü](docs/screenshots/takvim.png)
+![Calendar view](docs/screenshots/takvim.png)
 
 ---
 
-## Ekran görüntüleri
+## Screenshots
 
 <table>
   <tr>
-    <td width="50%"><a href="docs/screenshots/pano.png"><img src="docs/screenshots/pano.png" alt="Kanban pano görünümü"></a><br><sub><b>Pano görünümü</b> — Yapılacak / Devam ediyor / Bloke / Tamamlandı</sub></td>
-    <td width="50%"><a href="docs/screenshots/gorev-detay.png"><img src="docs/screenshots/gorev-detay.png" alt="Görev detayı"></a><br><sub><b>Görev detayı</b> — durum, atama, etiket, yorum, görev geçmişi</sub></td>
+    <td width="50%"><a href="docs/screenshots/pano.png"><img src="docs/screenshots/pano.png" alt="Kanban board view"></a><br><sub><b>Board view</b> — Yapılacak / Devam ediyor / Bloke / Tamamlandı (To do / In progress / Blocked / Done)</sub></td>
+    <td width="50%"><a href="docs/screenshots/gorev-detay.png"><img src="docs/screenshots/gorev-detay.png" alt="Task detail"></a><br><sub><b>Task detail</b> — status, assignment, labels, comments, task history</sub></td>
   </tr>
   <tr>
-    <td width="50%"><a href="docs/screenshots/aktivite.png"><img src="docs/screenshots/aktivite.png" alt="Aktivite kaydı"></a><br><sub><b>Aktivite</b> — kim ne yaptı, kişi ve eylem filtreli</sub></td>
-    <td width="50%"><a href="docs/screenshots/ekip.png"><img src="docs/screenshots/ekip.png" alt="Ekip ekranı"></a><br><sub><b>Ekip</b> — kişi başı ilerleme; ekleme/çıkarma yalnızca yöneticide</sub></td>
+    <td width="50%"><a href="docs/screenshots/aktivite.png"><img src="docs/screenshots/aktivite.png" alt="Activity log"></a><br><sub><b>Activity</b> — who did what, filtered by person and action</sub></td>
+    <td width="50%"><a href="docs/screenshots/ekip.png"><img src="docs/screenshots/ekip.png" alt="Team screen"></a><br><sub><b>Team</b> — per-person progress; adding and removing is admin-only</sub></td>
   </tr>
   <tr>
-    <td width="50%"><a href="docs/screenshots/giris.png"><img src="docs/screenshots/giris.png" alt="Giriş ekranı"></a><br><sub><b>Giriş</b> — şifre alanı yalnızca yönetici hesaplarında açılır</sub></td>
-    <td width="50%" align="center"><a href="docs/screenshots/mobil.png"><img src="docs/screenshots/mobil.png" alt="Mobil görünüm" width="300"></a><br><sub><b>Mobil</b> — telefondan işaretlemek için</sub></td>
+    <td width="50%"><a href="docs/screenshots/giris.png"><img src="docs/screenshots/giris.png" alt="Sign-in screen"></a><br><sub><b>Sign-in</b> — the password field only appears for admin accounts</sub></td>
+    <td width="50%" align="center"><a href="docs/screenshots/mobil.png"><img src="docs/screenshots/mobil.png" alt="Mobile view" width="300"></a><br><sub><b>Mobile</b> — for ticking things off from your phone</sub></td>
   </tr>
 </table>
 
-> Görsellerdeki veri depodaki `sprint.config.ts` örneğinin aynısı — klonlayıp
-> tohumladığında bu ekranları birebir görürsün.
+> The data in the screenshots is exactly the `sprint.config.ts` example that ships
+> with the repo — clone it, seed it, and you get these screens verbatim.
+
+The same board with the interface switched to Turkish. Notice what changed and what
+didn't: the chrome, the status names and the day names are Turkish, while the task
+titles and track labels stay exactly as they were written in the config.
+
+![The board with the Turkish interface](docs/screenshots/takvim-tr.png)
 
 ---
 
-## Neler var
+## What's inside
 
-**İki görünüm, tek tuşla geçiş.** Takvim görünümü sprint'i gün sekmelerine
-böler; her gün içinde track (iş kolu) blokları durur. Kanban görünümü aynı
-görevleri **Yapılacak / Devam ediyor / Bloke / Tamamlandı** kolonlarına dizer.
-Seçim `localStorage`'da saklanır, bir dahaki gelişte aynı görünüm açılır.
+**Two views, one keystroke apart.** The calendar view splits the sprint into day
+tabs, with track blocks inside each day. The Kanban view lays the same tasks out in
+**Yapılacak / Devam ediyor / Bloke / Tamamlandı** (To do / In progress / Blocked /
+Done) columns. Your choice is kept in `localStorage`, so you land on the same view
+next time.
 
-**Tek tıkla tamamlama.** Görev kartındaki kutuyu işaretlemek yeter; detay
-ekranını açmaya gerek yok.
+**One-click completion.** Ticking the checkbox on a task card is enough; you don't
+have to open the detail screen.
 
-**Atama ile devralma ayrı kaydedilir.** Devralınabilir bir işi (yani
-`origin_track` taşıyan bir görevi) kendine almak aktivite kaydına *claim*,
-başkasına atamak *assign* olarak düşer — "kim gönüllü oldu" ile "kime verildi"
-karışmaz.
+**Assigning and claiming are recorded separately.** Taking a claimable piece of work
+— that is, a task carrying an `origin_track` — for yourself lands in the activity log
+as *claim*; handing it to someone else lands as *assign*. "Who volunteered" and "who
+was given it" don't get mixed up.
 
-**Yorum ve `@ad` etiketleme.** Yorum yazarken `@` sonrası ekip üyesi adları
-otomatik tamamlanır; eşleşen isimler `mentions` tablosuna işlenir. Eşleştirme
-Türkçe karakterlere ve büyük/küçük harfe duyarsızdır, üç kelimeye kadar ad
-yakalar (`@Ayşe`, `@Ayşe Yılmaz`).
+**Comments and `@name` mentions.** While writing a comment, typing `@` autocompletes
+team member names; matching names are recorded in the `mentions` table. Matching
+ignores case and handles Turkish characters, and captures names up to three words
+long (`@Ayşe`, `@Ayşe Yılmaz`).
 
-**Serbest etiketler.** Sabit bir liste yok; ihtiyaç duyulan etiket anında
-eklenir ve `lib/labels.ts` üzerinden küçük harfe normalize edilir — "ACİL" ile
-"acil" aynı etiket sayılır.
+**Free-form labels.** There's no fixed list; you add the label you need on the spot
+and `lib/labels.ts` normalizes it to lowercase — "ACİL" and "acil" count as the same
+label.
 
-**Panoda öne çıkanlar.** `is_blocker` işaretli görevler bloker olarak
-vurgulanır. `origin_track` taşıyan görevler "devralınabilir işler" olarak ayrı
-gösterilir — bir track'in kapasitesi bittiğinde iş başka bir track'e açılır.
+**Highlights on the board.** Tasks flagged with `is_blocker` are called out as
+blockers. Tasks carrying an `origin_track` are shown separately as claimable work —
+when a track runs out of capacity, the work opens up to another track.
 
-**Yetki modeli sade.** Görev oluşturmayı, durum değiştirmeyi, atamayı ve yorumu
-herkes yapar. Silme ve kişi yönetimi yalnızca yöneticide. (Tam tablo aşağıda.)
+**Bilingual out of the box.** English and Turkish, switched with one button in the top
+bar, remembered per person. Your own content is never translated — see
+[Language](#language).
 
-**Terminalden de kullanılır.** Depo bir MCP sunucusu içeriyor: Claude Code,
-Codex ve OpenCode panoyu doğrudan okuyup güncelleyebilir. Ajanın yaptığı
-değişiklikler de aynı aktivite kaydına düşer. Bkz. [`mcp/README.md`](mcp/README.md).
+**A plain permission model.** Anyone can create tasks, change status, assign, and
+comment. Deletion and people management are admin-only. (Full table below.)
+
+**It works from the terminal too.** The repo contains an MCP server: Claude Code,
+Codex and OpenCode can read and update the board directly. Changes an agent makes
+land in the same activity log. See [`mcp/README.md`](mcp/README.md).
 
 ---
 
-## 5 dakikada ayağa kaldır
+## Up and running in 5 minutes
 
-Vercel + Neon üzerinden en kısa yol. Yerel bir veritabanına ihtiyaç yok.
+The shortest path, via Vercel + Neon. No local database needed.
 
-### 1. Depoyu al ve Vercel'e bağla
+### 1. Get the repo and link it to Vercel
 
 ```bash
-git clone <depo-adresi> sprint-board
+git clone <repo-url> sprint-board
 cd sprint-board
 npm install
 npx vercel link
 ```
 
-### 2. Neon veritabanını bağla
+### 2. Attach the Neon database
 
-Vercel panelinde **Storage → Marketplace → Neon** üzerinden bir veritabanı
-oluşturup projeye bağlayın. Entegrasyon `DATABASE_URL`'i ortam değişkeni olarak
-otomatik enjekte eder; elle eklemenize gerek yok.
+In the Vercel dashboard, create a database under **Storage → Marketplace → Neon** and
+attach it to the project. The integration injects `DATABASE_URL` as an environment
+variable automatically; you don't need to add it by hand.
 
-### 3. Kalan üç değişkeni ekle
+### 3. Add the remaining three variables
 
 ```bash
 npx vercel env add SESSION_SECRET production --value "$(openssl rand -base64 32)"
-npx vercel env add ADMIN_PASSWORD  production --value "$YONETICI_SIFRESI"
+npx vercel env add ADMIN_PASSWORD  production --value "$YOUR_ADMIN_PASSWORD"
 npx vercel env add SEED_TOKEN      production --value "$(openssl rand -hex 24)"
 ```
 
-> ⚠️ **`--value` bayrağını atlamayın.** `vercel env add NAME production`
-> komutuna değeri boru hattıyla (`echo "$DEGER" | vercel env add ...`) vermek
-> değişkeni **boş** kaydedebiliyor. CLI stdin'i her zaman beklendiği gibi
-> okumuyor ve hata da vermiyor — sonuç, üretimde sessizce boş bir
-> `SESSION_SECRET`. Değeri her zaman `--value "$DEGER"` ile geçirin.
+> ⚠️ **Do not skip the `--value` flag.** Piping the value into
+> `vercel env add NAME production` (`echo "$VALUE" | vercel env add ...`) can store
+> the variable **empty**. The CLI doesn't always read stdin the way you'd expect, and
+> it doesn't error either — the result is a silently empty `SESSION_SECRET` in
+> production. Always pass the value with `--value "$VALUE"`.
 
-> ⚠️ **Sensitive değişkenler `vercel env pull` ile doğrulanamaz.** Vercel'in
-> gizli (sensitive) olarak sakladığı değerler geri okunamaz; `.env` dosyasına
-> boş ya da maskeli düşer. "Boş görünüyor" diye yeniden yazmadan önce
-> doğrulamayı **canlı bir istekle** yapın — örneğin giriş yapmayı denemek
-> `SESSION_SECRET`'i, aşağıdaki tohumlama çağrısı `SEED_TOKEN`'ı test eder.
+> ⚠️ **Sensitive variables cannot be verified with `vercel env pull`.** Values Vercel
+> stores as sensitive can't be read back; they land in the `.env` file empty or
+> masked. Before you rewrite something because it "looks empty", verify it **with a
+> live request** — for example, trying to sign in exercises `SESSION_SECRET`, and the
+> seed call below exercises `SEED_TOKEN`.
 
-### 4. Sprint'ini tanımla
+### 4. Define your sprint
 
-`sprint.config.ts` dosyasını kendi ekibine, günlerine ve görevlerine göre
-düzenle. (Rehber bir alt bölümde.)
+Edit `sprint.config.ts` to match your own team, days and tasks. (Guide in the section
+below.)
 
-### 5. Deploy et ve tohumla
+### 5. Deploy and seed
 
 ```bash
 npx vercel deploy --prod
-curl -X POST https://<projen>.vercel.app/api/seed \
+curl -X POST https://<your-project>.vercel.app/api/seed \
   -H "x-seed-token: $SEED_TOKEN"
 ```
 
-Başarılı yanıt eklenen kayıt sayılarını döner:
+A successful response returns the number of rows inserted:
 
 ```json
 { "ok": true, "inserted": { "users": 3, "days": 3, "tasks": 8, "labels": 3 } }
 ```
 
-Artık adrese girip e-postanızı yazarak panoyu kullanabilirsiniz.
+Now open the URL, type your email, and start using the board.
 
 ---
 
-## `sprint.config.ts` yapılandırma rehberi
+## `sprint.config.ts` configuration guide
 
-Kök dizindeki **`sprint.config.ts` düzenleyeceğin tek dosyadır.** Tip
-sözleşmesi `lib/config-types.ts`'te, çalışma zamanı doğrulaması
-`lib/config.ts`'te durur.
+**`sprint.config.ts` in the root is the only file you need to edit.** The type
+contract lives in `lib/config-types.ts`, runtime validation in `lib/config.ts`.
 
-Doğrulama **modül yüklenirken** çalışır. Bozuk bir yapılandırma sessizce garip
-bir panoya değil, ilk istekte net bir hata mesajına dönüşür:
+Validation runs **at module load**. A broken configuration doesn't turn into a
+quietly strange board — it turns into a clear error message on the first request:
 
 ```
 sprint.config.ts geçersiz:
@@ -167,70 +178,73 @@ sprint.config.ts geçersiz:
   • "ali@ornek.com" tanımsız bir track'e bağlı: "MOBILE".
 ```
 
-### Üst düzey alanlar
+Validation messages are emitted in Turkish; the strings live in `lib/config.ts`.
 
-| Alan | Zorunlu | Ne yapar |
+### Top-level fields
+
+| Field | Required | What it does |
 |---|---|---|
-| `projectName` | ✅ | Sekme başlığı ve üst navigasyonda görünen ad. Boş olamaz. |
-| `description` | ❌ | Kısa açıklama. |
-| `timezone` | ❌ | IANA saat dilimi. Belirtilmezse `Europe/Istanbul`. |
-| `tracks` | ✅ | İş kolları. En az bir tane. |
-| `users` | ✅ | Giriş whitelist'i. En az biri `is_admin: true` olmalı. |
-| `days` | ✅ | Sprint günleri. En az bir tane. |
-| `tasks` | ✅ | Görevler (boş dizi de olabilir; panoyu uygulama içinden doldurabilirsin). |
+| `projectName` | ✅ | The name shown in the tab title and top navigation. Cannot be empty. |
+| `description` | ❌ | Short description. |
+| `timezone` | ❌ | IANA time zone. Defaults to `Europe/Istanbul`. |
+| `defaultLocale` | ❌ | Startup language: `'en'` or `'tr'`. Defaults to `'en'`. |
+| `tracks` | ✅ | Workstreams. At least one. |
+| `users` | ✅ | Sign-in whitelist. At least one must have `is_admin: true`. |
+| `days` | ✅ | Sprint days. At least one. |
+| `tasks` | ✅ | Tasks (an empty array is fine; you can fill the board from inside the app). |
 
-### `tracks` — iş kolları
+### `tracks` — workstreams
 
-| Alan | Zorunlu | Kural |
+| Field | Required | Rule |
 |---|---|---|
-| `key` | ✅ | Veritabanına yazılan anahtar. Yalnızca `A-Z`, `0-9` ve alt çizgi. Tekil. |
-| `label` | ✅ | Arayüzde görünen ad. |
-| `abbr` | ✅ | Görev kodlarında kullanılan kısaltma (`G1-DEV-01`). Track'ler arasında tekil — çakışırsa kodlar çakışır. |
-| `color` | ✅ | Sabit paletten bir değer. |
+| `key` | ✅ | The key written to the database. `A-Z`, `0-9` and underscore only. Unique. |
+| `label` | ✅ | The name shown in the interface. |
+| `abbr` | ✅ | The abbreviation used in task codes (`G1-DEV-01`). Unique across tracks — if it collides, the codes collide. |
+| `color` | ✅ | A value from the fixed palette. |
 
-Renk **serbest metin değil**, sekiz seçenekli sabit bir palet:
+Color is **not free text** — it's a fixed palette of eight options:
 `indigo`, `teal`, `sky`, `rose`, `amber`, `violet`, `emerald`, `slate`.
 
-Bunun nedeni Tailwind: sınıf adları derleme anında kaynak dosyalar taranarak
-üretilir, çalışma zamanında `bg-${renk}-100` gibi bir dizi kurmak boş bir stil
-üretir. Palet karşılıkları `lib/config.ts` içinde birebir yazılıdır.
+The reason is Tailwind: class names are generated at build time by scanning the source
+files, so assembling a string like `bg-${color}-100` at runtime produces no style at
+all. The palette mappings are written out literally in `lib/config.ts`.
 
-### `users` — giriş whitelist'i
+### `users` — the sign-in whitelist
 
-| Alan | Zorunlu | Kural |
+| Field | Required | Rule |
 |---|---|---|
-| `email` | ✅ | Küçük harfe çevrilir. Giriş bu listeye göre yapılır: listede yoksa giriş yok. |
-| `name` | ✅ | `@ad` etiketlemesi bu adı arar. Adların ilk kelimeleri farklı olsun: iki kişi de "Ali" ile başlarsa `@Ali` hangisini kastettiğini ayırt edemez. |
-| `track` | ✅ | `tracks` içindeki bir `key`. |
-| `is_admin` | ❌ | `true` ise girişte `ADMIN_PASSWORD` sorulur; silme ve kişi yönetimi yetkisi açılır. En az bir kişide `true` olmalı. |
+| `email` | ✅ | Lowercased. Sign-in is governed by this list: not on it, not in. |
+| `name` | ✅ | `@name` mentions look up this name. Make sure first words differ: if two people both start with "Ali", `@Ali` can't tell which one you mean. |
+| `track` | ✅ | A `key` from `tracks`. |
+| `is_admin` | ❌ | If `true`, sign-in asks for `ADMIN_PASSWORD` and unlocks deletion and people management. At least one person must have `true`. |
 
-### `days` — sprint günleri
+### `days` — sprint days
 
-| Alan | Zorunlu | Kural |
+| Field | Required | Rule |
 |---|---|---|
-| `day_no` | ✅ | Pozitif tam sayı, tekil. Gün sekmeleri bu sıraya göre dizilir. |
+| `day_no` | ✅ | Positive integer, unique. Day tabs are ordered by it. |
 | `date` | ✅ | `YYYY-MM-DD`. |
-| `weekday` | ✅ | Gün adı (`Pazartesi`). |
-| `theme` | ✅ | Günün teması — sekme başlığının altında görünür. Boş olamaz. |
-| `milestone` | ❌ | Doldurulursa o gün milestone olarak işaretlenir. |
+| `weekday` | ✅ | Day name (`Pazartesi`). |
+| `theme` | ✅ | The theme of the day — shown under the tab title. Cannot be empty. |
+| `milestone` | ❌ | If filled in, that day is marked as a milestone. |
 
-### `tasks` — görevler
+### `tasks` — tasks
 
-| Alan | Zorunlu | Kural |
+| Field | Required | Rule |
 |---|---|---|
-| `code` | ✅ | Görevin kalıcı kimliği ve URL'i (`/task/G1-DEV-01`). Tekil. **Tohumladıktan sonra değiştirme.** |
-| `day_no` | ✅ | `days` içindeki bir `day_no`. |
-| `track` | ✅ | `tracks` içindeki bir `key` — görevin şu anki sahibi. |
-| `title` | ✅ | Boş olamaz. |
-| `origin_track` | ❌ | Devralınan işlerde işin geldiği track. Panoda "devralınabilir" olarak gösterilir. |
-| `detail` | ❌ | Uzun açıklama. |
-| `output` | ❌ | Görevin somut çıktısı — "bitti" tanımını netleştirir. |
-| `status` | ❌ | `todo` \| `in_progress` \| `blocked` \| `done`. Belirtilmezse `todo`. |
-| `assignee` | ❌ | `users` içindeki bir e-posta. Boş bırakılırsa görev sahipsiz açılır. |
-| `is_blocker` | ❌ | `true` ise panoda bloker olarak öne çıkar. |
-| `labels` | ❌ | Serbest etiketler; küçük harfe çevrilir. |
+| `code` | ✅ | The task's permanent identity and URL (`/task/G1-DEV-01`). Unique. **Don't change it after seeding.** |
+| `day_no` | ✅ | A `day_no` from `days`. |
+| `track` | ✅ | A `key` from `tracks` — the task's current owner. |
+| `title` | ✅ | Cannot be empty. |
+| `origin_track` | ❌ | For handed-over work, the track the work came from. Shown as claimable on the board. |
+| `detail` | ❌ | Long description. |
+| `output` | ❌ | The task's concrete deliverable — it sharpens the definition of done. |
+| `status` | ❌ | `todo` \| `in_progress` \| `blocked` \| `done`. Defaults to `todo`. |
+| `assignee` | ❌ | An email from `users`. Left empty, the task starts unassigned. |
+| `is_blocker` | ❌ | If `true`, the task is highlighted as a blocker on the board. |
+| `labels` | ❌ | Free-form labels; lowercased. |
 
-### Küçük bir örnek
+### A small example
 
 ```ts
 import type { SprintConfig } from './lib/config-types';
@@ -285,61 +299,65 @@ const config: SprintConfig = {
 export default config;
 ```
 
+The shipped example is in Turkish, as are the UI strings, which live in the
+components — write your own config in whatever language your team uses.
+
 ---
 
-## Ortam değişkenleri
+## Environment variables
 
-| Değişken | Zorunlu | Ne için |
+| Variable | Required | What for |
 |---|---|---|
-| `DATABASE_URL` | ✅ | Neon Postgres bağlantısı. Vercel'in Neon entegrasyonu otomatik enjekte eder. |
-| `SESSION_SECRET` | ✅ | JWT imza anahtarı. `openssl rand -base64 32` ile üret. |
-| `ADMIN_PASSWORD` | ✅ | Yönetici hesaplarının giriş şifresi. |
-| `SEED_TOKEN` | ✅ | `POST /api/seed` çağrısını korur. |
-| `NEON_LOCAL_PROXY` | ❌ | Yalnızca lokal geliştirmede. Üretimde tanımlamayın. |
+| `DATABASE_URL` | ✅ | The Neon Postgres connection. Vercel's Neon integration injects it automatically. |
+| `SESSION_SECRET` | ✅ | JWT signing key. Generate with `openssl rand -base64 32`. |
+| `ADMIN_PASSWORD` | ✅ | The sign-in password for admin accounts. |
+| `SEED_TOKEN` | ✅ | Protects the `POST /api/seed` call. |
+| `NEON_LOCAL_PROXY` | ❌ | Local development only. Don't define it in production. |
 
-Şablon için `.env.example` dosyasına bakın.
+See `.env.example` for a template.
 
 ---
 
-## Tohumlama
+## Seeding
 
-`POST /api/seed` iki iş yapar:
+`POST /api/seed` does two things:
 
-1. Şemayı kurar. Tüm `CREATE` ifadeleri `IF NOT EXISTS` — var olan tablolara
-   dokunmaz. Şemanın tek kaynağı `lib/schema.ts` içindeki `SCHEMA_SQL`.
-2. `sprint.config.ts` içeriğini `users`, `sprint_days`, `tasks` ve
-   `task_labels` tablolarına `ON CONFLICT DO NOTHING` ile yazar.
+1. Sets up the schema. Every `CREATE` statement is `IF NOT EXISTS` — it won't touch
+   existing tables. The single source of the schema is `SCHEMA_SQL` in
+   `lib/schema.ts`.
+2. Writes the contents of `sprint.config.ts` into the `users`, `sprint_days`, `tasks`
+   and `task_labels` tables with `ON CONFLICT DO NOTHING`.
 
-Uç nokta `x-seed-token` başlığını `SEED_TOKEN` ile karşılaştırır; eşleşmezse
-`403` döner. Oturum gerektirmez (`proxy.ts` bunu açık uçlar listesinde tutar),
-o yüzden `SEED_TOKEN`'ı tahmin edilebilir bırakmayın.
+The endpoint compares the `x-seed-token` header against `SEED_TOKEN` and returns
+`403` on a mismatch. It doesn't require a session (`proxy.ts` keeps it on the list of
+open endpoints), so don't leave `SEED_TOKEN` guessable.
 
 ```bash
-# Üretim
-curl -X POST https://<projen>.vercel.app/api/seed \
+# Production
+curl -X POST https://<your-project>.vercel.app/api/seed \
   -H "x-seed-token: $SEED_TOKEN"
 
-# Lokal
+# Local
 curl -X POST http://localhost:3000/api/seed \
   -H "x-seed-token: $SEED_TOKEN"
 ```
 
-> ⚠️ **Tekrar çağırmak güvenli, ama mevcut kayıtları GÜNCELLEMEZ.**
-> `ON CONFLICT DO NOTHING` yalnızca yeni satır ekler. `sprint.config.ts`'i
-> tohumladıktan sonra bir görevin başlığını değiştirirsen, o değişiklik canlı
-> panoya **yansımaz** — yeni eklediğin satırlar eklenir, mevcutlar olduğu gibi
-> kalır. Var olan bir kaydı düzeltmek istiyorsan panonun kendi arayüzünden
-> düzenle ya da veritabanında elle güncelle.
+> ⚠️ **Calling it again is safe, but it does NOT UPDATE existing rows.**
+> `ON CONFLICT DO NOTHING` only inserts new rows. If you change a task's title in
+> `sprint.config.ts` after seeding, that change will **not** show up on the live
+> board — newly added rows get inserted, existing ones stay as they are. To fix an
+> existing record, edit it through the board's own interface or update the database by
+> hand.
 
 ---
 
-## Lokal geliştirme
+## Local development
 
-Bir tuzak var: **Neon'un HTTP sürücüsü düz bir Postgres'e bağlanamaz.** SQL'i
-HTTP üzerinden konuşur, protokol uyuşmaz. Lokalde araya Neon'un HTTP
-protokolünü konuşan bir proxy koymak gerekir — yani iki konteyner.
+There's one trap: **Neon's HTTP driver can't connect to a plain Postgres.** It speaks
+SQL over HTTP, and the protocols don't match. Locally you need a proxy in between
+that speaks Neon's HTTP protocol — so, two containers.
 
-### 1. Postgres ve Neon HTTP proxy'sini çalıştır
+### 1. Run Postgres and the Neon HTTP proxy
 
 ```bash
 docker run -d --name sb-pg \
@@ -352,21 +370,21 @@ docker run -d --name sb-neon-proxy \
   ghcr.io/timowilhelm/local-neon-http-proxy:main
 ```
 
-### 2. `.env.local` dosyasını oluştur
+### 2. Create `.env.local`
 
 ```bash
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/sprintboard
 NEON_LOCAL_PROXY=http://localhost:4444/sql
-SESSION_SECRET=<openssl rand -base64 32 çıktısı>
-ADMIN_PASSWORD=<kendi lokal şifren>
-SEED_TOKEN=<openssl rand -hex 24 çıktısı>
+SESSION_SECRET=<output of openssl rand -base64 32>
+ADMIN_PASSWORD=<your own local password>
+SEED_TOKEN=<output of openssl rand -hex 24>
 ```
 
-`NEON_LOCAL_PROXY` tanımlıysa `lib/db.ts` sürücünün `fetchEndpoint`'ini bu
-adrese çevirir ve güvenli WebSocket'i kapatır. Üretimde bu değişken olmadığı
-için davranış hiç değişmez.
+When `NEON_LOCAL_PROXY` is set, `lib/db.ts` points the driver's `fetchEndpoint` at
+that address and turns off the secure WebSocket. In production the variable isn't
+there, so behavior doesn't change at all.
 
-### 3. Sunucuyu çalıştır ve tohumla
+### 3. Run the server and seed
 
 ```bash
 npm install
@@ -374,10 +392,9 @@ npm run dev
 curl -X POST http://localhost:3000/api/seed -H "x-seed-token: $SEED_TOKEN"
 ```
 
-Kullanılabilir script'ler: `npm run dev`, `npm run build`, `npm run start`,
-`npm run lint`.
+Available scripts: `npm run dev`, `npm run build`, `npm run start`, `npm run lint`.
 
-Temizlik:
+Cleanup:
 
 ```bash
 docker rm -f sb-pg sb-neon-proxy
@@ -385,254 +402,286 @@ docker rm -f sb-pg sb-neon-proxy
 
 ---
 
-## MCP: panoyu terminalden kullan
+## MCP: drive the board from your terminal
 
-Depo bir **stdio MCP sunucusu** içeriyor (`mcp/`). Claude Code, Codex ve
-OpenCode panoyu doğrudan okuyup güncelleyebilir — tarayıcıya geçmeye gerek yok:
+The repo contains a **stdio MCP server** (`mcp/`). Claude Code, Codex and OpenCode can
+read and update the board directly — no need to switch to the browser:
 
 ```
-> bugün bana ne kaldı?
-> G2-DEV-01'i tamamlandı işaretle
-> şemayla ilgili yorumda @Deniz'i etiketle
+> what's left for me today?
+> mark G2-DEV-01 as done
+> mention @Deniz in a comment about the schema
 ```
 
-Beş okuma aracı (`list_tasks`, `get_task`, `sprint_summary`, `list_activity`,
-`list_people`) ve beş yazma aracı (`set_task_status`, `assign_task`,
-`create_task`, `add_comment`, `set_task_labels`) var. **Silme aracı bilinçli
-olarak yok** — bir ajanın yanlış anlamayla veri silmesini istemiyoruz.
+There are five read tools (`list_tasks`, `get_task`, `sprint_summary`,
+`list_activity`, `list_people`) and five write tools (`set_task_status`,
+`assign_task`, `create_task`, `add_comment`, `set_task_labels`). **There is
+deliberately no delete tool** — we don't want an agent deleting data on a
+misunderstanding.
 
-Ajanın yaptığı her değişiklik, panodan yapılmış gibi aynı aktivite kaydına,
-`SPRINT_BOARD_ACTOR` olarak tanımladığın kişinin adına düşer.
+Every change an agent makes lands in the same activity log as if it came from the
+board, attributed to the person you set as `SPRINT_BOARD_ACTOR`.
 
-Kurulum ve üç araç için hazır yapılandırma: [`mcp/README.md`](mcp/README.md).
+Setup and ready-made configuration for three tools: [`mcp/README.md`](mcp/README.md).
 
 ---
 
-## Yetki modeli
+## Language
 
-| İşlem | Herkes | Yönetici |
+The interface ships in **English and Turkish**, and anyone can switch with the 🌐
+button in the top bar. The choice is stored in an `sb_locale` cookie, so it survives
+reloads and is read on the server too — pages render in the right language on the
+first byte, no flash of the wrong text.
+
+Which language a person sees first comes from `defaultLocale` in
+`sprint.config.ts` (`'en'` or `'tr'`), until they pick one themselves.
+
+**What is translated:** everything the app itself says — navigation, buttons, status
+names, form labels, empty states, and the error messages the API returns.
+
+**What is not:** your own content. Task titles, descriptions, track labels, day
+themes, comments and labels come from `sprint.config.ts` or from the people using the
+board, and are shown exactly as written. A Turkish team writing Turkish tasks and
+reading an English UI is a supported combination; the board doesn't machine-translate
+anything.
+
+One thing worth knowing: leave `weekday` out of your `days` entries. If it's absent
+the day name is derived from the date in the active language, so `Thursday` becomes
+`Perşembe` when the UI flips. Write it explicitly only if you want a fixed label.
+
+Adding a third language is three steps: add its key to `LOCALES` in
+`lib/i18n/locales.ts`, then add that key to every file under `lib/i18n/sections/`, and
+add the month and weekday names in `app/format.ts`. TypeScript refuses to compile
+until each section has the new language, so a half-translated build isn't possible.
+
+---
+
+## Permission model
+
+| Action | Everyone | Admin |
 |---|---|---|
-| Giriş (yalnızca e-posta) | ✅ | — |
-| Giriş (e-posta + `ADMIN_PASSWORD`) | — | ✅ |
-| Panoyu ve görev detaylarını görme | ✅ | ✅ |
-| Görev oluşturma | ✅ | ✅ |
-| Durum değiştirme / tek tıkla tamamlama | ✅ | ✅ |
-| Görev atama ve kendine alma | ✅ | ✅ |
-| Yorum yazma ve `@ad` ile etiketleme | ✅ | ✅ |
-| Etiket ekleme / kaldırma | ✅ | ✅ |
-| Aktivite kaydını görüntüleme | ✅ | ✅ |
-| **Görev silme** | ❌ | ✅ |
-| **Ekibe kişi ekleme / çıkarma** | ❌ | ✅ |
+| Sign in (email only) | ✅ | — |
+| Sign in (email + `ADMIN_PASSWORD`) | — | ✅ |
+| View the board and task details | ✅ | ✅ |
+| Create tasks | ✅ | ✅ |
+| Change status / one-click completion | ✅ | ✅ |
+| Assign tasks and claim them | ✅ | ✅ |
+| Write comments and mention with `@name` | ✅ | ✅ |
+| Add / remove labels | ✅ | ✅ |
+| View the activity log | ✅ | ✅ |
+| **Delete tasks** | ❌ | ✅ |
+| **Add / remove team members** | ❌ | ✅ |
 
-Yetki kontrolü iki katmanda yapılır: `proxy.ts` oturumsuz istekleri en başta
-keser, route handler'lar ise yönetici gerektiren işlemlerde ayrıca kontrol eder
-— yani proxy'ye güvenilmez. Yapılandırmada `is_admin: true` olan hesaplar
-panodan çıkarılamaz.
+Permission checks happen in two layers: `proxy.ts` cuts off session-less requests up
+front, and route handlers separately check admin-only operations — that is, the proxy
+isn't trusted. Accounts with `is_admin: true` in the configuration can't be removed
+from the board.
 
 ---
 
-## Proje yapısı
+## Project structure
 
 ```
-sprint.config.ts          ← düzenleyeceğin tek dosya
-proxy.ts                  Rota koruması (Next.js 16'da middleware'in adı)
+sprint.config.ts          ← the only file you'll edit
+proxy.ts                  Route protection (what middleware is called in Next.js 16)
 
 lib/
-  config-types.ts         sprint.config.ts'in tip sözleşmesi
-  config.ts               Çalışma zamanı doğrulaması + türetilmiş sabitler, renk paleti
-  schema.ts               SCHEMA_SQL — veritabanı şemasının tek kaynağı
-  db.ts                   Neon HTTP bağlantısı (tembel başlatılır)
-  session.ts              JWT imzalama/doğrulama + çerez yönetimi
-  audit.ts                logActivity — tek audit yazma noktası
-  labels.ts               Etiket normalizasyonu (Türkçe "İ" dahil)
-  types.ts                Veritabanı satırı ve API sözleşmesi tipleri
+  config-types.ts         The type contract for sprint.config.ts
+  config.ts               Runtime validation + derived constants, color palette
+  schema.ts               SCHEMA_SQL — the single source of the database schema
+  db.ts                   Neon HTTP connection (lazily initialized)
+  session.ts              JWT signing/verification + cookie handling
+  audit.ts                logActivity — the single audit write point
+  i18n/                   Bilingual UI: dictionaries, locale resolution, provider
+  labels.ts               Label normalization (including the Turkish "İ")
+  types.ts                Database row and API contract types
 
 app/
-  page.tsx                Pano (takvim ↔ kanban)
-  giris/page.tsx          Giriş ekranı
-  task/[code]/page.tsx    Görev detayı
-  aktivite/page.tsx       Aktivite kaydı (kişi + eylem filtreli)
-  ekip/page.tsx           Ekip listesi ve yönetimi
-  board-data.ts           Sunucu tarafı okuma katmanı — yalnızca SELECT
-  format.ts               Türkçe tarih/metin biçimlendirme (sabit saat dilimi)
-  components/             Arayüz bileşenleri (kart, detay, kanban, yorum kutusu…)
+  page.tsx                Board (calendar ↔ kanban)
+  giris/page.tsx          Sign-in screen
+  task/[code]/page.tsx    Task detail
+  aktivite/page.tsx       Activity log (filtered by person + action)
+  ekip/page.tsx           Team list and management
+  board-data.ts           Server-side read layer — SELECT only
+  format.ts               Turkish date/text formatting (fixed time zone)
+  components/             UI components (card, detail, kanban, comment box…)
   api/
-    auth/login            GET: şifre gerekiyor mu? · POST: giriş
-    auth/logout           POST: çıkış
-    board                 GET: pano verisi
-    tasks                 GET, POST: liste ve oluşturma
-    tasks/[id]            PATCH: durum/atama · DELETE: silme (yönetici)
-    tasks/[id]/comments   GET, POST: yorum + mention
-    tasks/[id]/labels     POST, DELETE: etiket
-    users                 GET · POST/DELETE: kişi yönetimi (yönetici)
-    seed                  POST: şema + tohumlama (x-seed-token)
+    auth/login            GET: is a password needed? · POST: sign in
+    auth/logout           POST: sign out
+    board                 GET: board data
+    tasks                 GET, POST: list and create
+    tasks/[id]            PATCH: status/assignment · DELETE: delete (admin)
+    tasks/[id]/comments   GET, POST: comment + mentions
+    tasks/[id]/labels     POST, DELETE: labels
+    users                 GET · POST/DELETE: people management (admin)
+    seed                  POST: schema + seeding (x-seed-token)
 
 mcp/
-  server.js               stdio MCP sunucusu (Claude Code · Codex · OpenCode)
-  README.md               Kurulum, araç listesi, yetki notları
-.mcp.json.example         Claude Code için hazır yapılandırma
+  server.js               stdio MCP server (Claude Code · Codex · OpenCode)
+  README.md               Setup, tool list, permission notes
+.mcp.json.example         Ready-made configuration for Claude Code
 ```
 
-Mimarinin iki kuralı:
+Two rules of the architecture:
 
-- **Okuma sunucudan, yazma API'den.** Sayfalar `app/board-data.ts` üzerinden
-  doğrudan Neon'a `SELECT` atar (kendi origin'ine fetch atıp çerez taşımaz).
-  Her mutasyon istemciden `/api/*` uçlarına gider.
-- **Tek audit noktası.** Her mutasyon route'u `lib/audit.ts`'teki
-  `logActivity` fonksiyonunu çağırır. Böylece log'lanmayan bir aksiyon kalmaz.
+- **Reads from the server, writes through the API.** Pages `SELECT` straight from Neon
+  via `app/board-data.ts` (rather than fetching their own origin and carrying cookies
+  around). Every mutation goes from the client to an `/api/*` endpoint.
+- **A single audit point.** Every mutating route calls the `logActivity` function in
+  `lib/audit.ts`. That way no action goes unlogged.
 
 ---
 
-## Veri modeli
+## Data model
 
-Yedi tablo. Şemanın tek kaynağı `lib/schema.ts`; tüm `CREATE`'ler
-`IF NOT EXISTS` olduğu için tohumlama tekrar çağrılabilir.
+Seven tables. The single source of the schema is `lib/schema.ts`; because every
+`CREATE` is `IF NOT EXISTS`, seeding can be called again.
 
-| Tablo | Ne tutar | Notlar |
+| Table | What it holds | Notes |
 |---|---|---|
-| `users` | E-posta (PK), ad, track, `is_admin` | Giriş whitelist'i. Kişi silinirse görevleri sahipsiz kalır (`ON DELETE SET NULL`). |
-| `sprint_days` | `day_no` (PK), tarih, gün adı, tema, milestone | Gün sekmeleri. |
-| `tasks` | `code` (UNIQUE), gün, track, `origin_track`, başlık, açıklama, çıktı, durum, atanan, `is_blocker`, sıra, tamamlama bilgisi | `code` kalıcı kimlik ve URL. |
-| `task_labels` | (`task_id`, `label`) | Bileşik PK; aynı etiket iki kez eklenemez. Görev silinirse birlikte gider. |
-| `comments` | Görev, yazar, gövde, zaman | |
-| `mentions` | Yorum, görev, etiketlenen kişi, `seen` | Yorum gövdesindeki `@ad` çözümlemesinden üretilir. |
-| `activity_log` | Aktör, eylem, görev, eski/yeni değer, not, zaman | Tek yazma noktası `lib/audit.ts`. Görev silinse bile kayıt kalır — bu yüzden FK yok. |
+| `users` | Email (PK), name, track, `is_admin` | The sign-in whitelist. If a person is deleted their tasks become unassigned (`ON DELETE SET NULL`). |
+| `sprint_days` | `day_no` (PK), date, day name, theme, milestone | Day tabs. |
+| `tasks` | `code` (UNIQUE), day, track, `origin_track`, title, description, output, status, assignee, `is_blocker`, order, completion info | `code` is the permanent identity and the URL. |
+| `task_labels` | (`task_id`, `label`) | Composite PK; the same label can't be added twice. Goes away with the task. |
+| `comments` | Task, author, body, timestamp | |
+| `mentions` | Comment, task, mentioned person, `seen` | Produced by resolving `@name` in the comment body. |
+| `activity_log` | Actor, action, task, old/new value, note, timestamp | The single write point is `lib/audit.ts`. Records survive task deletion — hence no FK. |
 
-Eylem tipleri: `login`, `status`, `assign`, `claim`, `comment`, `label`,
-`create`, `delete`, `user_add`, `user_remove`.
+Action types: `login`, `status`, `assign`, `claim`, `comment`, `label`, `create`,
+`delete`, `user_add`, `user_remove`.
 
 ---
 
-## API uçları
+## API endpoints
 
-Hepsi oturum ister; `proxy.ts` oturumsuz istekleri en başta keser. Yönetici
-gerektiren uçlar route handler içinde ayrıca kontrol edilir.
+All of them require a session; `proxy.ts` cuts off session-less requests up front.
+Endpoints that require admin are separately checked inside the route handler.
 
-| Metot | Uç | Kim | Ne yapar |
+| Method | Endpoint | Who | What it does |
 |---|---|---|---|
-| `GET` | `/api/auth/login?email=` | herkes | Bu e-posta için şifre gerekiyor mu? |
-| `POST` | `/api/auth/login` | herkes | Giriş; yöneticide `password` zorunlu |
-| `POST` | `/api/auth/logout` | oturum | Çerezi siler |
-| `GET` | `/api/board` | oturum | Panonun ihtiyaç duyduğu her şey tek yanıtta |
-| `POST` | `/api/tasks` | oturum | Görev oluşturur; kod otomatik üretilir |
-| `PATCH` | `/api/tasks/[id]` | oturum | `title`, `detail`, `output`, `day_no`, `status`, `assignee` — yalnızca gönderilen alanlar değişir |
-| `DELETE` | `/api/tasks/[id]` | **yönetici** | Görevi siler |
-| `GET` `POST` | `/api/tasks/[id]/comments` | oturum | Yorumlar; `@ad` mention'a çevrilir |
-| `POST` `DELETE` | `/api/tasks/[id]/labels` | oturum | Etiket ekler/çıkarır |
-| `GET` | `/api/activity` | oturum | Aktivite kaydı |
-| `GET` | `/api/users` | oturum | Ekip listesi |
-| `POST` `DELETE` | `/api/users` | **yönetici** | Kişi ekler/çıkarır |
-| `POST` | `/api/seed` | `x-seed-token` | Şema + tohumlama (oturum gerekmez) |
+| `GET` | `/api/auth/login?email=` | anyone | Does this email need a password? |
+| `POST` | `/api/auth/login` | anyone | Sign in; `password` required for admins |
+| `POST` | `/api/auth/logout` | session | Clears the cookie |
+| `GET` | `/api/board` | session | Everything the board needs in a single response |
+| `POST` | `/api/tasks` | session | Creates a task; the code is generated automatically |
+| `PATCH` | `/api/tasks/[id]` | session | `title`, `detail`, `output`, `day_no`, `status`, `assignee` — only the fields you send change |
+| `DELETE` | `/api/tasks/[id]` | **admin** | Deletes the task |
+| `GET` `POST` | `/api/tasks/[id]/comments` | session | Comments; `@name` is turned into a mention |
+| `POST` `DELETE` | `/api/tasks/[id]/labels` | session | Adds/removes labels |
+| `GET` | `/api/activity` | session | The activity log |
+| `GET` | `/api/users` | session | The team list |
+| `POST` `DELETE` | `/api/users` | **admin** | Adds/removes people |
+| `POST` | `/api/locale` | anyone | Stores the UI language preference (no session required) |
+| `POST` | `/api/seed` | `x-seed-token` | Schema + seeding (no session required) |
 
 ---
 
-## Sorun giderme
+## Troubleshooting
 
-**`/api/seed` 403 dönüyor.** `SEED_TOKEN` sunucuda tanımsız ya da başlıktaki
-değerle eşleşmiyor. Vercel'de değeri boru hattıyla eklediysen boş kaydedilmiş
-olabilir — `--value` bayrağıyla tekrar ekle. Değişkeni değiştirdikten sonra
-yeniden deploy etmen gerekir.
+**`/api/seed` returns 403.** `SEED_TOKEN` is either undefined on the server or
+doesn't match the value in the header. If you added it on Vercel through a pipe it may
+have been stored empty — add it again with the `--value` flag. After changing a
+variable you have to redeploy.
 
-**Girişte 500 alıyorum.** Genellikle `SESSION_SECRET` boş. Yukarıdaki `--value`
-tuzağına bak; `vercel env pull` ile doğrulamaya çalışma, sensitive değerler boş
-görünür.
+**I get a 500 on sign-in.** Usually `SESSION_SECRET` is empty. See the `--value` trap
+above; don't try to verify with `vercel env pull`, sensitive values come back empty.
 
-**`fetch failed` / bağlantı hatası, lokalde.** Neon HTTP sürücüsü düz
-Postgres'e bağlanamaz. İki konteynerin ayakta olduğundan ve `.env.local`
-içinde `NEON_LOCAL_PROXY` tanımlı olduğundan emin ol.
+**`fetch failed` / connection error, locally.** The Neon HTTP driver can't connect to
+a plain Postgres. Make sure both containers are up and that `NEON_LOCAL_PROXY` is set
+in `.env.local`.
 
-**`sprint.config.ts geçersiz: …` hatası.** Doğrulama modül yüklenirken koşar ve
-tüm sorunları tek seferde listeler. Mesajdaki maddeleri düzelt; hepsi düzelene
-kadar uygulama açılmaz. Bu bilinçli: yarım yapılandırmayla sessizce garip
-davranan bir pano istemiyoruz.
+**A `sprint.config.ts geçersiz: …` error.** Validation runs at module load and lists
+every problem at once. Fix the items in the message; the app won't start until they're
+all fixed. This is deliberate: we don't want a board that quietly behaves strangely on
+a half-finished configuration.
 
-**Tohumladım ama değişikliğim panoda yok.** `ON CONFLICT DO NOTHING` mevcut
-kayıtları güncellemez. Var olan bir görevi düzeltmek için panoyu ya da
-veritabanını kullan.
+**I seeded but my change isn't on the board.** `ON CONFLICT DO NOTHING` doesn't update
+existing rows. To fix an existing task, use the board or the database.
 
-**Görev kartındaki track rengi gri çıkıyor.** Veritabanındaki track,
-yapılandırmadan kaldırılmış. `trackStyle` bilinmeyen değerlerde çökmez, nötr
-gri döner. Kaldırdığın track'i geri ekle ya da o görevleri başka bir track'e taşı.
+**The track color on a task card comes out gray.** The track in the database has been
+removed from the configuration. `trackStyle` doesn't crash on unknown values, it
+returns a neutral gray. Add the removed track back, or move those tasks to another
+track.
 
-**MCP: `"…" panoda kayıtlı değil`.** `SPRINT_BOARD_ACTOR` yapılandırmadaki bir
-e-posta olmalı. Yazma işlemleri bu kişi adına kaydedildiği için zorunlu.
-
----
-
-## Bilinçli olarak yok
-
-Bunlar eksik değil, kapsam dışı — küçük ekipte karşılığını vermeyen
-karmaşıklık:
-
-- **Sürükle-bırak.** Durum değiştirmek tek tık; kanban kolonları arasında
-  taşıma yok.
-- **Bildirim.** E-posta ya da push yok. Mention'lar `mentions` tablosunda
-  duruyor; bildirim isteyen bunun üzerine kurabilir.
-- **Sprint geçmişi.** Tek sprint tutulur. Yeni sprint = yeni yapılandırma ve
-  temiz veritabanı.
-- **Rol/izin sistemi.** İki seviye var: herkes ve yönetici. Aradaki ince
-  ayarlar yok.
-- **Çoklu dil.** Arayüz Türkçe. Metinler bileşenlerin içinde; çeviri altyapısı
-  eklenmedi.
-- **Gerçek kimlik doğrulama.** E-posta doğrulanmaz. Amaç denetim izi, erişim
-  kontrolü değil.
+**MCP: `"…" panoda kayıtlı değil`.** `SPRINT_BOARD_ACTOR` has to be an email from the
+configuration. It's required because write operations are recorded on that person's
+behalf.
 
 ---
 
-## Kendi projene uyarlarken dikkat
+## Deliberately absent
 
-- **`code` alanlarını tohumladıktan sonra değiştirme.** Görev kodu kalıcı
-  kimliktir ve URL'de geçer (`/task/G1-DEV-01`). Değiştirirsen eski bağlantılar
-  kırılır, tohumlama da eski kaydı silmeyip yenisini ekler.
-- **`sprint.config.ts` düzenlemeleri canlı veriye yansımaz.** Tohumlama
-  yalnızca ekler. Sprint başladıktan sonraki değişiklikleri panodan yapın.
-- **Track rengi paletin dışına çıkamaz.** Yeni bir renk istiyorsan
-  `lib/config.ts` içindeki `PALETTE` sabitine sınıf adlarını **elle** yaz ve
-  `lib/config-types.ts`'teki `TrackColor` birleşimine ekle. Tailwind sınıflarını
-  çalışma zamanında birleştirmek işe yaramaz.
-- **`abbr` değerlerini tekil tut.** İki track aynı kısaltmayı kullanırsa
-  otomatik üretilen görev kodları çakışır — doğrulama bunu zaten reddeder.
-- **En az bir `is_admin: true` hesap bırak.** Aksi halde kimse görev silemez ve
-  ekibe kişi ekleyemez; doğrulama da hata verir.
-- **`SESSION_SECRET`'i değiştirmek herkesi çıkışa zorlar.** Mevcut çerezler
-  doğrulanamaz hale gelir.
-- **Giriş bir güvenlik sınırı değil.** E-posta doğrulanmıyor; listedeki bir
-  adresi bilen herkes o kişi olarak girebilir. Amaç denetim izi, erişim
-  kontrolü değil.
-- **Saat dilimi yapılandırmadan gelir, makineden değil.** Varsayılan
-  `Europe/Istanbul`; değiştirmek için `sprint.config.ts` içine
-  `timezone: 'Europe/Berlin'` yaz. Sabit olması bilinçli: sunucu ile istemci
-  aynı tarihi üretmezse React hydration uyuşmazlığı çıkar.
-- **MCP `DATABASE_URL` ile çalışır, yani tam yetkilidir.** Bağlantı adresini
-  paylaşmak panonun tamamını paylaşmaktır; ayrıntı `mcp/README.md` içinde.
+These aren't missing, they're out of scope — complexity that doesn't pay for itself on
+a small team:
+
+- **Drag and drop.** Changing status is one click; there's no dragging between kanban
+  columns.
+- **Notifications.** No email, no push. Mentions sit in the `mentions` table; anyone
+  who wants notifications can build on top of that.
+- **Sprint history.** One sprint is kept. A new sprint means a new configuration and a
+  clean database.
+- **A role/permission system.** There are two levels: everyone and admin. Nothing
+  fine-grained in between.
+- **Real authentication.** Emails aren't verified. The goal is an audit trail, not
+  access control.
 
 ---
 
-## Teknoloji notları
+## Adapting it to your own project
+
+- **Don't change `code` fields after seeding.** A task code is a permanent identity
+  and it appears in the URL (`/task/G1-DEV-01`). Change it and old links break, and
+  seeding will add a new row rather than deleting the old one.
+- **Edits to `sprint.config.ts` don't reach live data.** Seeding only inserts. Make
+  post-kickoff changes from the board.
+- **Track color can't leave the palette.** If you want a new color, write the class
+  names **by hand** into the `PALETTE` constant in `lib/config.ts` and add it to the
+  `TrackColor` union in `lib/config-types.ts`. Assembling Tailwind classes at runtime
+  doesn't work.
+- **Keep `abbr` values unique.** If two tracks use the same abbreviation the
+  auto-generated task codes collide — validation already rejects this.
+- **Leave at least one `is_admin: true` account.** Otherwise nobody can delete a task
+  or add someone to the team, and validation will error out.
+- **Changing `SESSION_SECRET` signs everyone out.** Existing cookies become
+  unverifiable.
+- **Sign-in is not a security boundary.** Emails aren't verified; anyone who knows an
+  address on the list can sign in as that person. The goal is an audit trail, not
+  access control.
+- **The time zone comes from the configuration, not the machine.** The default is
+  `Europe/Istanbul`; to change it, put `timezone: 'Europe/Berlin'` in
+  `sprint.config.ts`. Its being fixed is deliberate: if server and client don't
+  produce the same date, you get a React hydration mismatch.
+- **MCP runs on `DATABASE_URL`, so it has full access.** Sharing the connection string
+  means sharing the whole board; details in `mcp/README.md`.
+
+---
+
+## Technical notes
 
 - **Next.js 16** (App Router) · **React 19** · **TypeScript** · **Tailwind CSS v4**
-- **Neon Postgres**, `@neondatabase/serverless` HTTP sürücüsüyle. `lib/db.ts`
-  bağlantıyı tembel kurar — derleme sırasında `DATABASE_URL` tanımsız olabilir,
-  bu yüzden bağlantı ilk sorguya kadar açılmaz.
-- **Oturum: `jose` ile HS256 imzalı JWT**, `sb_session` adlı httpOnly çerezde,
-  30 gün ömürlü. NextAuth **kullanılmıyor**; harici bir kimlik sağlayıcı yok.
-- **`proxy.ts`, `middleware.ts` değil.** Next.js 16'da middleware dosyasının
-  adı `proxy.ts`, dışa açılan fonksiyonun adı da `proxy` olmak zorunda. Eski
-  `middleware.ts` / `export function middleware` ikilisini kopyalarsanız rota
-  koruması sessizce hiç çalışmaz. Bu proxy yalnızca `nodejs` runtime'ında
-  çalışır (`jose` bunu gerektirir) ve **veritabanına dokunmaz** — sadece JWT
-  doğrular; asıl yetki kontrolü route handler'larda.
-- **Tailwind v4** yapılandırmayı PostCSS üzerinden alır
-  (`@tailwindcss/postcss`); `tailwind.config.js` dosyası yok.
+- **Neon Postgres**, via the `@neondatabase/serverless` HTTP driver. `lib/db.ts` sets
+  the connection up lazily — `DATABASE_URL` may be undefined at build time, so the
+  connection isn't opened until the first query.
+- **Session: an HS256-signed JWT via `jose`**, in an httpOnly cookie named
+  `sb_session`, with a 30-day lifetime. NextAuth is **not** used; there's no external
+  identity provider.
+- **`proxy.ts`, not `middleware.ts`.** In Next.js 16 the middleware file has to be
+  named `proxy.ts` and the exported function has to be named `proxy`. Copy over the
+  old `middleware.ts` / `export function middleware` pair and route protection
+  silently never runs. This proxy only runs on the `nodejs` runtime (`jose` requires
+  it) and **doesn't touch the database** — it only verifies the JWT; the real
+  permission checks are in the route handlers.
+- **Tailwind v4** takes its configuration through PostCSS
+  (`@tailwindcss/postcss`); there is no `tailwind.config.js` file.
 
 ---
 
-## Katkı
+## Contributing
 
-Bkz. [CONTRIBUTING.md](CONTRIBUTING.md). CI her push'ta `npm run lint` ve
-`npm run build` koşar; MCP sunucusunun sözdizimini ve eksik ortam değişkeni
-davranışını da ayrıca sınar.
+See [CONTRIBUTING.md](CONTRIBUTING.md). CI runs `npm run lint` and `npm run build` on
+every push; it also separately checks the MCP server's syntax and its behavior when
+environment variables are missing.
 
-## Lisans
+## License
 
-MIT — bkz. [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

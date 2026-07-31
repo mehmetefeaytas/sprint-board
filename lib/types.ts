@@ -17,7 +17,8 @@ export type UserRow = {
 export type DayRow = {
   day_no: number;
   date: string; // YYYY-MM-DD
-  weekday: string;
+  /** null ise gün adı tarihten türetilir (bkz. app/format.ts weekdayLabel). */
+  weekday: string | null;
   theme: string;
   milestone: string | null;
 };
@@ -76,24 +77,24 @@ export type BoardPayload = {
 
 export const STATUS_ORDER: Status[] = ['todo', 'in_progress', 'blocked', 'done'];
 
-export const STATUS_STYLES: Record<Status, { label: string; dot: string; chip: string }> = {
+/**
+ * Durumun yalnızca RENGİ. Metin sözlükten gelir (lib/i18n → common.status),
+ * çünkü arayüz iki dilli ve renk dile bağlı değil.
+ */
+export const STATUS_STYLES: Record<Status, { dot: string; chip: string }> = {
   todo: {
-    label: 'Yapılacak',
     dot: 'bg-slate-400',
     chip: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
   },
   in_progress: {
-    label: 'Devam ediyor',
     dot: 'bg-amber-500',
     chip: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
   },
   blocked: {
-    label: 'Bloke',
     dot: 'bg-rose-500',
     chip: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300',
   },
   done: {
-    label: 'Tamamlandı',
     dot: 'bg-emerald-500',
     chip: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
   },

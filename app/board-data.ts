@@ -15,6 +15,7 @@ import type {
   UserRow,
 } from '@/lib/types';
 import type { SessionUser } from '@/lib/session';
+import type { Dictionary } from '@/lib/i18n';
 
 type Row = Record<string, unknown>;
 
@@ -69,7 +70,7 @@ function toDay(row: Row): DayRow {
   return {
     day_no: int(row.day_no),
     date: text(row.date),
-    weekday: text(row.weekday),
+    weekday: textOrNull(row.weekday),
     theme: text(row.theme),
     milestone: textOrNull(row.milestone),
   };
@@ -297,14 +298,14 @@ export async function getTaskActivity(taskCode: string): Promise<ActivityRow[]> 
   return rows.map(toActivity);
 }
 
-/** Şema/bağlantı hatasını ekranda gösterilebilir Türkçe mesaja çevirir. */
-export function readableDbError(error: unknown): string {
+/**
+ * Şema/bağlantı hatasını ekranda gösterilebilir bir mesaja çevirir. Sözlüğü
+ * parametre olarak alır: bu dosya sunucu tarafı veri katmanı, çerez okumak
+ * onun işi değil — dili çağıran sayfa zaten biliyor.
+ */
+export function readableDbError(error: unknown, t: Dictionary): string {
   const message = error instanceof Error ? error.message : String(error);
-  if (message.includes('DATABASE_URL')) {
-    return 'Veritabanı bağlantısı tanımlı değil (DATABASE_URL). Ortam değişkenini ekleyip sayfayı yenileyin.';
-  }
-  if (/relation .* does not exist/i.test(message)) {
-    return 'Veritabanı tabloları henüz oluşturulmamış. Bir kez /api/seed adresini çağırarak şemayı ve tohum veriyi yükleyin.';
-  }
-  return 'Veri okunamadı: ' + message;
+  if (message.includes('DATABASE_URL')) return t.pages.dbError.noConnection;
+  if (/relation .* does not exist/i.test(message)) return t.pages.dbError.noTables;
+  return t.pages.dbError.unreadable(message);
 }

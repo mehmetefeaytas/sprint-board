@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { trackStyle, type UserRow } from '@/lib/types';
+import { useDict } from '@/lib/i18n/provider';
 import ProgressBar from './progress-bar';
 import { EmptyState } from './notice';
 
@@ -22,11 +23,12 @@ type Props = {
 
 export default function TeamList({ members, isAdmin, protectedEmails }: Props) {
   const router = useRouter();
+  const t = useDict();
   const [busyEmail, setBusyEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function remove(user: UserRow) {
-    if (!window.confirm(`${user.name} ekipten çıkarılsın mı?`)) return;
+    if (!window.confirm(t.team.confirmRemove(user.name))) return;
     setBusyEmail(user.email);
     setError(null);
     try {
@@ -38,20 +40,20 @@ export default function TeamList({ members, isAdmin, protectedEmails }: Props) {
         setError(
           payload && typeof payload === 'object' && 'error' in payload
             ? String((payload as { error: unknown }).error)
-            : 'Kişi çıkarılamadı.',
+            : t.team.error.removeFailed,
         );
         return;
       }
       router.refresh();
     } catch {
-      setError('Sunucuya ulaşılamadı. Kişi çıkarılamadı.');
+      setError(t.team.error.removeOffline);
     } finally {
       setBusyEmail(null);
     }
   }
 
   if (members.length === 0) {
-    return <EmptyState>Ekipte kayıtlı kişi yok.</EmptyState>;
+    return <EmptyState>{t.team.empty}</EmptyState>;
   }
 
   return (
@@ -79,7 +81,7 @@ export default function TeamList({ members, isAdmin, protectedEmails }: Props) {
               </span>
               {user.is_admin ? (
                 <span className="rounded bg-slate-900 px-1.5 py-0.5 text-[11px] font-medium text-white dark:bg-slate-100 dark:text-slate-900">
-                  yönetici
+                  {t.team.adminBadge}
                 </span>
               ) : null}
               {isAdmin && !protectedEmails.includes(user.email) ? (
@@ -89,7 +91,7 @@ export default function TeamList({ members, isAdmin, protectedEmails }: Props) {
                   onClick={() => void remove(user)}
                   className="ml-auto h-11 rounded-lg border border-rose-300 px-3 text-sm text-rose-700 disabled:opacity-60 dark:border-rose-800 dark:text-rose-300"
                 >
-                  {busyEmail === user.email ? 'Çıkarılıyor…' : 'Ekipten çıkar'}
+                  {busyEmail === user.email ? t.team.removing : t.team.remove}
                 </button>
               ) : null}
             </div>

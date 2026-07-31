@@ -15,10 +15,13 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- weekday NULL olabilir: boşsa gün adı tarihten ve aktif dilden türetilir.
+-- Bu sütunu zaten NOT NULL olarak oluşturmuş bir veritabanını güncellemek için:
+--   ALTER TABLE sprint_days ALTER COLUMN weekday DROP NOT NULL;
 CREATE TABLE IF NOT EXISTS sprint_days (
   day_no    INT PRIMARY KEY,
   date      DATE NOT NULL,
-  weekday   TEXT NOT NULL,
+  weekday   TEXT,
   theme     TEXT NOT NULL,
   milestone TEXT
 );
