@@ -4,6 +4,11 @@
 // Claude Code, Codex, OpenCode ve MCP konuşan diğer araçlar panoyu bu sunucu
 // üzerinden okur ve günceller. Kurulum: mcp/README.md
 //
+// Not: yorumlar Türkçe (depo kuralı, bkz. AGENTS.md) ama sunucunun ürettiği
+// her metin İngilizce. Bu çıktıyı bir ajan okuyor ve depo İngilizce öncelikli;
+// web arayüzünün iki dilli sözlüğü buraya taşınmadı çünkü ortada gösterilecek
+// bir kullanıcı yok.
+//
 // Tasarım kararları:
 //
 // • Web uygulamasının HTTP API'sine değil doğrudan veritabanına bağlanır.
@@ -24,10 +29,10 @@ import pg from 'pg';
 
 const STATUSES = ['todo', 'in_progress', 'blocked', 'done'];
 const STATUS_LABELS = {
-  todo: 'Yapılacak',
-  in_progress: 'Devam ediyor',
-  blocked: 'Bloke',
-  done: 'Tamamlandı',
+  todo: 'To do',
+  in_progress: 'In progress',
+  blocked: 'Blocked',
+  done: 'Done',
 };
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -35,16 +40,16 @@ const ACTOR = (process.env.SPRINT_BOARD_ACTOR ?? '').trim().toLowerCase();
 
 if (!DATABASE_URL) {
   console.error(
-    'DATABASE_URL tanımlı değil. Panonun veritabanı adresini ver:\n' +
-      '  DATABASE_URL=postgres://... SPRINT_BOARD_ACTOR=sen@ornek.com node mcp/server.js',
+    'DATABASE_URL is not set. Point it at the board database:\n' +
+      '  DATABASE_URL=postgres://... SPRINT_BOARD_ACTOR=you@example.com node mcp/server.js',
   );
   process.exit(1);
 }
 if (!ACTOR || !ACTOR.includes('@')) {
   console.error(
-    'SPRINT_BOARD_ACTOR tanımlı değil veya e-posta değil.\n' +
-      'Yaptığın değişiklikler aktivite kaydına bu kişi adına yazılır; panoda\n' +
-      'kayıtlı bir e-posta olmalı.',
+    'SPRINT_BOARD_ACTOR is missing or is not an email address.\n' +
+      'Everything you change is recorded in the activity log under this person,\n' +
+      'so it has to be someone registered on the board.',
   );
   process.exit(1);
 }
@@ -69,8 +74,8 @@ async function requireActor() {
   const rows = await query('SELECT email, name, is_admin FROM users WHERE email = $1', [ACTOR]);
   if (!rows[0]) {
     throw new Error(
-      `"${ACTOR}" panoda kayıtlı değil. sprint.config.ts içindeki users listesine ekleyip ` +
-        'yeniden tohumla, ya da SPRINT_BOARD_ACTOR değerini kayıtlı bir e-postaya çevir.',
+      `"${ACTOR}" is not registered on the board. Add them to the users list in ` +
+        'sprint.config.ts and seed again, or point SPRINT_BOARD_ACTOR at a registered email.',
     );
   }
   actorRow = rows[0];
@@ -115,7 +120,7 @@ function text(value) {
 }
 
 function fail(message) {
-  return { content: [{ type: 'text', text: `Hata: ${message}` }], isError: true };
+  return { content: [{ type: 'text', text: `Error: ${message}` }], isError: true };
 }
 
 /**
@@ -141,7 +146,7 @@ function fold(value) {
     .toLocaleLowerCase('tr-TR')
     .normalize('NFD')
     .replace(/\p{M}/gu, '')
-    .replace(/\u0131/g, 'i')
+    .replace(/ı/g, 'i')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -189,13 +194,13 @@ function stamp(value) {
 /** Görevi iki satırda özetler: kimlik satırı + başlık. */
 function taskLine(task) {
   const marks = [];
-  if (task.is_blocker) marks.push('BLOKER');
-  if (task.origin_track) marks.push(`devralınabilir←${task.origin_track}`);
+  if (task.is_blocker) marks.push('BLOCKER');
+  if (task.origin_track) marks.push(`up for grabs from ${task.origin_track}`);
   if (task.labels?.length) marks.push(task.labels.join(','));
   const suffix = marks.length ? `  [${marks.join(' · ')}]` : '';
-  const owner = task.assignee_name ?? task.assignee ?? 'sahipsiz';
+  const owner = task.assignee_name ?? task.assignee ?? 'unassigned';
   return (
-    `${task.code}  ${STATUS_LABELS[task.status] ?? task.status} · G${task.day_no} ` +
+    `${task.code}  ${STATUS_LABELS[task.status] ?? task.status} · Day ${task.day_no} ` +
     `· ${task.track} · ${owner}\n    ${task.title}${suffix}`
   );
 }
@@ -209,18 +214,18 @@ const server = new McpServer({ name: 'sprint-board', version: '1.0.0' });
 server.registerTool(
   'list_tasks',
   {
-    title: 'Görevleri listele',
+    title: 'List tasks',
     description:
-      'Sprint görevlerini filtreleyerek listeler. Filtre verilmezse tüm görevler ' +
-      'gün ve sıra düzeninde döner.',
+      'Lists sprint tasks with optional filters. With no filters you get every task in ' +
+      'day and sort order.',
     inputSchema: {
-      day_no: z.number().int().positive().optional().describe('Yalnızca bu günün görevleri'),
-      track: z.string().optional().describe('Track anahtarı (ör. DEV)'),
+      day_no: z.number().int().positive().optional().describe('Only tasks on this day'),
+      track: z.string().optional().describe('Track key, e.g. DEV'),
       status: z.enum(['todo', 'in_progress', 'blocked', 'done']).optional(),
-      assignee: z.string().optional().describe('Bu kişiye atanmış görevler (e-posta)'),
-      label: z.string().optional().describe('Bu etikete sahip görevler'),
-      unassigned: z.boolean().optional().describe('true ise yalnızca sahipsiz görevler'),
-      blockers_only: z.boolean().optional().describe('true ise yalnızca bloker görevler'),
+      assignee: z.string().optional().describe('Tasks assigned to this person (email)'),
+      label: z.string().optional().describe('Tasks carrying this label'),
+      unassigned: z.boolean().optional().describe('true for unassigned tasks only'),
+      blockers_only: z.boolean().optional().describe('true for blocker tasks only'),
     },
   },
   async (args) => {
@@ -256,21 +261,22 @@ server.registerTool(
       values,
     );
 
-    if (rows.length === 0) return text('Bu filtreye uyan görev yok.');
-    return text(`${rows.length} görev:\n\n${rows.map(taskLine).join('\n')}`);
+    if (rows.length === 0) return text('No task matches that filter.');
+    const heading = rows.length === 1 ? '1 task:' : `${rows.length} tasks:`;
+    return text(`${heading}\n\n${rows.map(taskLine).join('\n')}`);
   },
 );
 
 server.registerTool(
   'get_task',
   {
-    title: 'Görev detayı',
-    description: 'Bir görevin tüm alanlarını, etiketlerini ve yorumlarını getirir.',
-    inputSchema: { code: z.string().describe('Görev kodu, ör. G1-DEV-01') },
+    title: 'Task detail',
+    description: 'Fetches every field of a task plus its labels and comments.',
+    inputSchema: { code: z.string().describe('Task code, e.g. G1-DEV-01') },
   },
   async ({ code }) => {
     const task = await findTask(code);
-    if (!task) return fail(`"${code}" kodlu görev yok.`);
+    if (!task) return fail(`There is no task with the code "${code}".`);
 
     const comments = await query(
       `SELECT c.body, c.created_at, u.name AS author_name, c.author
@@ -281,20 +287,20 @@ server.registerTool(
 
     const lines = [
       `${task.code} — ${task.title}`,
-      `Durum:   ${STATUS_LABELS[task.status] ?? task.status}`,
-      `Gün:     ${task.day_no}`,
-      `Track:   ${task.track}${task.origin_track ? ` (devralınabilir, kaynak: ${task.origin_track})` : ''}`,
-      `Sahip:   ${task.assignee_name ?? task.assignee ?? 'sahipsiz'}`,
-      `Bloker:  ${task.is_blocker ? 'evet' : 'hayır'}`,
-      `Etiket:  ${task.labels?.length ? task.labels.join(', ') : '—'}`,
+      `Status:   ${STATUS_LABELS[task.status] ?? task.status}`,
+      `Day:      ${task.day_no}`,
+      `Track:    ${task.track}${task.origin_track ? ` (up for grabs, originally ${task.origin_track})` : ''}`,
+      `Owner:    ${task.assignee_name ?? task.assignee ?? 'unassigned'}`,
+      `Blocker:  ${task.is_blocker ? 'yes' : 'no'}`,
+      `Labels:   ${task.labels?.length ? task.labels.join(', ') : '—'}`,
     ];
-    if (task.detail) lines.push('', `Açıklama:\n${task.detail}`);
-    if (task.output) lines.push('', `Beklenen çıktı:\n${task.output}`);
+    if (task.detail) lines.push('', `Description:\n${task.detail}`);
+    if (task.output) lines.push('', `Expected output:\n${task.output}`);
     if (task.completed_at) {
-      lines.push('', `Tamamlandı: ${stamp(task.completed_at)} · ${task.completed_by ?? '—'}`);
+      lines.push('', `Completed: ${stamp(task.completed_at)} · ${task.completed_by ?? '—'}`);
     }
     if (comments.length) {
-      lines.push('', `Yorumlar (${comments.length}):`);
+      lines.push('', `Comments (${comments.length}):`);
       for (const comment of comments) {
         lines.push(
           `  • ${comment.author_name ?? comment.author} ${stamp(comment.created_at)}\n    ${comment.body}`,
@@ -308,10 +314,10 @@ server.registerTool(
 server.registerTool(
   'sprint_summary',
   {
-    title: 'Sprint özeti',
+    title: 'Sprint summary',
     description:
-      "Sprint'in genel durumu: gün gün ilerleme, kişi başı tamamlama oranı ve " +
-      'açık blokerler.',
+      'Where the sprint stands: progress day by day, completion per person, and any open ' +
+      'blockers.',
     inputSchema: {},
   },
   async () => {
@@ -341,35 +347,36 @@ server.registerTool(
     const done = counts.done ?? 0;
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
 
-    const lines = [`Toplam ${total} görev · %${pct} tamamlandı`, ''];
+    const lines = [`${total} tasks in total · ${pct}% done`, ''];
     for (const status of STATUSES) {
       lines.push(`  ${STATUS_LABELS[status].padEnd(14)} ${counts[status] ?? 0}`);
     }
 
     const dayByNo = new Map(days.map((day) => [day.day_no, day]));
-    lines.push('', 'Günler:');
+    lines.push('', 'Days:');
     for (const row of byDay) {
       const day = dayByNo.get(row.day_no);
-      const label = day ? `${day.weekday} · ${day.theme}` : '—';
+      // weekday yapılandırmada boş bırakılmış olabilir; o zaman tarih yeterli.
+      const label = day ? [day.weekday, day.theme].filter(Boolean).join(' · ') : '—';
       const milestone = day?.milestone ? `  ★ ${day.milestone}` : '';
-      lines.push(`  G${row.day_no}  ${row.done}/${row.total}  ${label}${milestone}`);
+      lines.push(`  Day ${row.day_no}  ${row.done}/${row.total}  ${label}${milestone}`);
     }
 
-    lines.push('', 'Kişiler:');
+    lines.push('', 'People:');
     for (const row of byPerson) {
       lines.push(`  ${row.name} (${row.track})  ${row.done}/${row.total}`);
     }
 
     if (blockers.length) {
-      lines.push('', `Açık bloker (${blockers.length}):`);
+      lines.push('', `Open blockers (${blockers.length}):`);
       for (const blocker of blockers) {
         lines.push(
           `  ${blocker.code} [${STATUS_LABELS[blocker.status] ?? blocker.status}] ` +
-            `${blocker.title} — ${blocker.assignee ?? 'sahipsiz'}`,
+            `${blocker.title} — ${blocker.assignee ?? 'unassigned'}`,
         );
       }
     } else {
-      lines.push('', 'Açık bloker yok.');
+      lines.push('', 'No open blockers.');
     }
 
     return text(lines.join('\n'));
@@ -379,12 +386,12 @@ server.registerTool(
 server.registerTool(
   'list_activity',
   {
-    title: 'Aktivite kaydı',
-    description: 'Kim ne yaptı — en yeni kayıt üstte.',
+    title: 'Activity log',
+    description: 'Who did what — newest first.',
     inputSchema: {
-      limit: z.number().int().min(1).max(200).optional().describe('Varsayılan 30'),
-      actor: z.string().optional().describe('Yalnızca bu kişinin hareketleri (e-posta)'),
-      task_code: z.string().optional().describe('Yalnızca bu görevin geçmişi'),
+      limit: z.number().int().min(1).max(200).optional().describe('Defaults to 30'),
+      actor: z.string().optional().describe('Only this person\'s actions (email)'),
+      task_code: z.string().optional().describe('Only this task\'s history'),
     },
   },
   async ({ limit, actor, task_code: taskCode }) => {
@@ -409,7 +416,7 @@ server.registerTool(
       values,
     );
 
-    if (rows.length === 0) return text('Kayıt yok.');
+    if (rows.length === 0) return text('Nothing recorded yet.');
     return text(
       rows
         .map((row) => {
@@ -427,16 +434,18 @@ server.registerTool(
 server.registerTool(
   'list_people',
   {
-    title: 'Ekibi listele',
-    description: "Panoya kayıtlı kişiler, track'leri ve yönetici durumu.",
+    title: 'List the team',
+    description: 'Everyone registered on the board, their track, and whether they are an admin.',
     inputSchema: {},
   },
   async () => {
     const rows = await query('SELECT email, name, track, is_admin FROM users ORDER BY name');
-    if (rows.length === 0) return text('Kayıtlı kişi yok — pano henüz tohumlanmamış olabilir.');
+    if (rows.length === 0) {
+      return text('Nobody is registered — the board may not have been seeded yet.');
+    }
     return text(
       rows
-        .map((row) => `${row.name}  <${row.email}>  ${row.track}${row.is_admin ? '  [yönetici]' : ''}`)
+        .map((row) => `${row.name}  <${row.email}>  ${row.track}${row.is_admin ? '  [admin]' : ''}`)
         .join('\n'),
     );
   },
@@ -449,21 +458,20 @@ server.registerTool(
 server.registerTool(
   'set_task_status',
   {
-    title: 'Görev durumunu değiştir',
+    title: 'Change task status',
     description:
-      'Görevin durumunu güncellendirir. "done" seçilirse tamamlama zamanı ve ' +
-      'tamamlayan kişi de yazılır.',
+      'Updates a task\'s status. Picking "done" also records who completed it and when.',
     inputSchema: {
-      code: z.string().describe('Görev kodu'),
+      code: z.string().describe('Task code'),
       status: z.enum(['todo', 'in_progress', 'blocked', 'done']),
     },
   },
   async ({ code, status }) => {
     await requireActor();
     const task = await findTask(code);
-    if (!task) return fail(`"${code}" kodlu görev yok.`);
+    if (!task) return fail(`There is no task with the code "${code}".`);
     if (task.status === status) {
-      return text(`${task.code} zaten "${STATUS_LABELS[status]}" durumunda; değişiklik yapılmadı.`);
+      return text(`${task.code} is already "${STATUS_LABELS[status]}"; nothing changed.`);
     }
 
     await query(
@@ -485,7 +493,7 @@ server.registerTool(
 
     return text(
       `${task.code}: ${STATUS_LABELS[task.status]} → ${STATUS_LABELS[status]}\n` +
-        `Aktivite kaydına ${ACTOR} adına yazıldı.`,
+        `Recorded in the activity log as ${ACTOR}.`,
     );
   },
 );
@@ -493,27 +501,27 @@ server.registerTool(
 server.registerTool(
   'assign_task',
   {
-    title: 'Görev ata',
+    title: 'Assign a task',
     description:
-      'Görevi bir kişiye atar. E-posta verilmezse görevi aktörün kendisi üstlenir. ' +
-      'Devralınabilir bir işi kendine alırsan aktivite kaydında "claim", diğer ' +
-      'durumlarda "assign" olarak görünür. Atamayı kaldırmak için unassign: true kullan.',
+      'Assigns a task to someone. With no email you take it on yourself. Taking on a task ' +
+      'that is up for grabs is recorded as "claim", everything else as "assign". Pass ' +
+      'unassign: true to clear the assignee.',
     inputSchema: {
-      code: z.string().describe('Görev kodu'),
-      email: z.string().optional().describe('Atanacak kişinin e-postası'),
-      unassign: z.boolean().optional().describe('true ise görev sahipsiz kalır'),
+      code: z.string().describe('Task code'),
+      email: z.string().optional().describe('Email of the person to assign it to'),
+      unassign: z.boolean().optional().describe('true leaves the task unassigned'),
     },
   },
   async ({ code, email, unassign }) => {
     await requireActor();
     const task = await findTask(code);
-    if (!task) return fail(`"${code}" kodlu görev yok.`);
+    if (!task) return fail(`There is no task with the code "${code}".`);
 
     let target = null;
     if (!unassign) {
       target = (email ?? ACTOR).trim().toLowerCase();
       const rows = await query('SELECT email FROM users WHERE email = $1', [target]);
-      if (!rows[0]) return fail(`"${target}" panoda kayıtlı değil.`);
+      if (!rows[0]) return fail(`"${target}" is not registered on the board.`);
     }
 
     await query('UPDATE tasks SET assignee = $1, updated_at = now() WHERE id = $2', [
@@ -530,49 +538,47 @@ server.registerTool(
       to: target,
     });
 
-    if (!target) return text(`${task.code} sahipsiz bırakıldı.`);
-    return text(`${task.code} → ${target}${target === ACTOR ? ' (kendine alındı)' : ''}`);
+    if (!target) return text(`${task.code} is now unassigned.`);
+    return text(`${task.code} → ${target}${target === ACTOR ? ' (taken on by you)' : ''}`);
   },
 );
 
 server.registerTool(
   'create_task',
   {
-    title: 'Görev oluştur',
+    title: 'Create a task',
     description:
-      'Yeni görev açar. Kod verilmezse G{gün}-{TRACK}-{sıra} biçiminde otomatik üretilir.',
+      'Opens a new task. Without a code one is generated as G{day}-{TRACK}-{n}.',
     inputSchema: {
-      day_no: z.number().int().positive().describe('Görevin bağlanacağı gün'),
-      track: z.string().describe('Track anahtarı'),
-      title: z.string().min(1).describe('Görev başlığı'),
+      day_no: z.number().int().positive().describe('The day the task belongs to'),
+      track: z.string().describe('Track key'),
+      title: z.string().min(1).describe('Task title'),
       detail: z.string().optional(),
-      output: z.string().optional().describe('Beklenen somut çıktı'),
+      output: z.string().optional().describe('The concrete output expected'),
       assignee: z.string().optional(),
       labels: z.array(z.string()).optional(),
       is_blocker: z.boolean().optional(),
-      code: z.string().optional().describe('Elle kod vermek istersen'),
+      code: z.string().optional().describe('Set the code yourself instead'),
     },
   },
   async (args) => {
     await requireActor();
 
     const days = await query('SELECT day_no FROM sprint_days WHERE day_no = $1', [args.day_no]);
-    if (!days[0]) return fail(`Gün ${args.day_no} tanımlı değil.`);
+    if (!days[0]) return fail(`Day ${args.day_no} is not defined.`);
 
     const track = args.track.trim().toUpperCase();
-    const known = await query(
-      'SELECT track FROM users UNION SELECT track FROM tasks',
-    );
+    const known = await query('SELECT track FROM users UNION SELECT track FROM tasks');
     const trackKeys = [...new Set(known.map((row) => String(row.track).toUpperCase()))];
     if (trackKeys.length > 0 && !trackKeys.includes(track)) {
-      return fail(`"${track}" bilinen bir track değil. Panodaki track'ler: ${trackKeys.join(', ')}.`);
+      return fail(`"${track}" is not a known track. The board has: ${trackKeys.join(', ')}.`);
     }
 
     if (args.assignee) {
       const rows = await query('SELECT email FROM users WHERE email = $1', [
         args.assignee.trim().toLowerCase(),
       ]);
-      if (!rows[0]) return fail(`"${args.assignee}" panoda kayıtlı değil.`);
+      if (!rows[0]) return fail(`"${args.assignee}" is not registered on the board.`);
     }
 
     let code = args.code?.trim();
@@ -617,7 +623,7 @@ server.registerTool(
     } catch (error) {
       // 23505: unique_violation
       if (error?.code === '23505') {
-        return fail(`"${code}" kodu zaten kullanılıyor. Başka bir kod ver.`);
+        return fail(`The code "${code}" is already taken. Pick another one.`);
       }
       throw error;
     }
@@ -638,7 +644,7 @@ server.registerTool(
     });
 
     return text(
-      `${created.code} oluşturuldu.${labels.length ? ` Etiketler: ${labels.join(', ')}` : ''}`,
+      `${created.code} created.${labels.length ? ` Labels: ${labels.join(', ')}` : ''}`,
     );
   },
 );
@@ -646,19 +652,19 @@ server.registerTool(
 server.registerTool(
   'add_comment',
   {
-    title: 'Yorum ekle',
+    title: 'Add a comment',
     description:
-      'Göreve yorum bırakır. Gövdede "@Ad" yazarsan panodaki kişiyle eşleşen ' +
-      'etiketler mention olarak kaydedilir.',
+      'Leaves a comment on a task. Writing "@Name" in the body records a mention for the ' +
+      'matching person on the board.',
     inputSchema: {
-      code: z.string().describe('Görev kodu'),
-      body: z.string().min(1).describe('Yorum metni'),
+      code: z.string().describe('Task code'),
+      body: z.string().min(1).describe('Comment text'),
     },
   },
   async ({ code, body }) => {
     await requireActor();
     const task = await findTask(code);
-    if (!task) return fail(`"${code}" kodlu görev yok.`);
+    if (!task) return fail(`There is no task with the code "${code}".`);
 
     const rows = await query(
       'INSERT INTO comments (task_id, author, body) VALUES ($1, $2, $3) RETURNING id',
@@ -684,31 +690,31 @@ server.registerTool(
       note: body.trim().slice(0, 140),
     });
 
-    const suffix = mentioned.length ? ` Etiketlenenler: ${mentioned.join(', ')}.` : '';
-    return text(`${task.code} görevine yorum eklendi.${suffix}`);
+    const suffix = mentioned.length ? ` Mentioned: ${mentioned.join(', ')}.` : '';
+    return text(`Comment added to ${task.code}.${suffix}`);
   },
 );
 
 server.registerTool(
   'set_task_labels',
   {
-    title: 'Etiket ekle/çıkar',
-    description: 'Göreve etiket ekler veya çıkarır.',
+    title: 'Add or remove labels',
+    description: 'Adds labels to a task or removes them.',
     inputSchema: {
-      code: z.string().describe('Görev kodu'),
-      add: z.array(z.string()).optional().describe('Eklenecek etiketler'),
-      remove: z.array(z.string()).optional().describe('Çıkarılacak etiketler'),
+      code: z.string().describe('Task code'),
+      add: z.array(z.string()).optional().describe('Labels to add'),
+      remove: z.array(z.string()).optional().describe('Labels to remove'),
     },
   },
   async ({ code, add, remove }) => {
     await requireActor();
     const task = await findTask(code);
-    if (!task) return fail(`"${code}" kodlu görev yok.`);
+    if (!task) return fail(`There is no task with the code "${code}".`);
 
     const toAdd = (add ?? []).map(normalizeLabel).filter(Boolean);
     const toRemove = (remove ?? []).map(normalizeLabel).filter(Boolean);
     if (toAdd.length === 0 && toRemove.length === 0) {
-      return fail('Eklenecek veya çıkarılacak en az bir etiket ver.');
+      return fail('Give at least one label to add or remove.');
     }
 
     for (const label of toAdd) {
@@ -728,7 +734,7 @@ server.registerTool(
       [task.id],
     );
     const list = current.map((row) => row.label);
-    return text(`${task.code} etiketleri: ${list.length ? list.join(', ') : '—'}`);
+    return text(`Labels on ${task.code}: ${list.length ? list.join(', ') : '—'}`);
   },
 );
 
@@ -737,10 +743,10 @@ server.registerTool(
 async function main() {
   await server.connect(new StdioServerTransport());
   // stdout JSON-RPC'ye ait; günlükler stderr'e yazılır.
-  console.error(`sprint-board MCP hazır · aktör: ${ACTOR}`);
+  console.error(`sprint-board MCP ready · actor: ${ACTOR}`);
 }
 
 main().catch((error) => {
-  console.error('MCP sunucusu başlatılamadı:', error?.message ?? error);
+  console.error('Could not start the MCP server:', error?.message ?? error);
   process.exit(1);
 });

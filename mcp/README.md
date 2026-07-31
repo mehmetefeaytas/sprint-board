@@ -1,54 +1,54 @@
-# Sprint Board MCP sunucusu
+# Sprint Board MCP server
 
-Panoyu **Claude Code, Codex, OpenCode** ve MCP konuşan diğer araçların içinden
-kullanmanı sağlar. Tarayıcıya geçmeden "bugün bana ne kaldı", "şu görevi
-tamamlandı işaretle", "@Deniz'e sor" diyebilirsin.
+Lets you drive the board from inside **Claude Code, Codex, OpenCode** and any other
+tool that speaks MCP. Without switching to the browser you can say "what's left for me
+today", "mark this task done", "ask @Dana".
 
-Ajanın yaptığı her değişiklik, tıpkı panodan yapılmış gibi **aktivite kaydına
-senin adına** düşer. Denetim izi bozulmaz.
+Every change an agent makes lands in the **activity log under your name**, exactly as
+if it came from the board. The audit trail stays intact.
 
-## Kurulum
+## Install
 
 ```bash
 cd mcp
 npm install
 ```
 
-Sunucu iki ortam değişkeni ister:
+The server needs two environment variables:
 
-| Değişken | Ne için |
+| Variable | What for |
 |---|---|
-| `DATABASE_URL` | Panonun veritabanı adresi. Vercel'deki değeri `vercel env pull` ile alabilirsin. |
-| `SPRINT_BOARD_ACTOR` | Senin e-postan. Yazma işlemleri bu kişi adına kaydedilir; panoda kayıtlı olmak zorunda. |
+| `DATABASE_URL` | The board's database. You can get the Vercel value with `vercel env pull`. |
+| `SPRINT_BOARD_ACTOR` | Your email. Writes are recorded under this person, who has to be registered on the board. |
 
-Doğru çalıştığını şöyle sınarsın — sunucu `sprint-board MCP hazır` yazıp
-beklemeye geçmeli (Ctrl+C ile çık):
+To check that it works, run it directly — the server should print
+`sprint-board MCP ready` and then wait (Ctrl+C to quit):
 
 ```bash
-DATABASE_URL='postgres://...' SPRINT_BOARD_ACTOR='sen@ornek.com' node mcp/server.js
+DATABASE_URL='postgres://...' SPRINT_BOARD_ACTOR='you@example.com' node mcp/server.js
 ```
 
-## Araca bağlama
+## Connecting a tool
 
-Aşağıdaki örneklerde `/mutlak/yol/sprint-board` yerine deponun kendi yolunu yaz.
-Mutlak yol kullan: araçlar sunucuyu farklı çalışma dizinlerinden başlatabilir.
+In the examples below, replace `/absolute/path/sprint-board` with your own checkout.
+Use an absolute path: tools may start the server from a different working directory.
 
 ### Claude Code
 
 ```bash
 claude mcp add --env DATABASE_URL='postgres://...' \
-  --env SPRINT_BOARD_ACTOR='sen@ornek.com' \
+  --env SPRINT_BOARD_ACTOR='you@example.com' \
   --transport stdio sprint-board \
-  -- node /mutlak/yol/sprint-board/mcp/server.js
+  -- node /absolute/path/sprint-board/mcp/server.js
 ```
 
-`--` işareti zorunlu: öncesi Claude'un kendi seçenekleri, sonrası sunucuyu
-çalıştıran komut. Ayrıca sunucu adını doğrudan `--env`'den sonra yazma, CLI onu
-başka bir `KEY=value` çifti sanır.
+The `--` is required: everything before it belongs to Claude, everything after it is
+the command that runs the server. Also don't put the server name straight after
+`--env` — the CLI will read it as another `KEY=value` pair.
 
-Ekiple paylaşmak istersen depo kökündeki `.mcp.json.example` dosyasını
-`.mcp.json` olarak kopyala ve yolları düzelt. Sırların depoya girmemesi için
-değerleri `${DATABASE_URL}` gibi kabuk değişkeni olarak bırakabilirsin.
+To share the setup with your team, copy `.mcp.json.example` from the repo root to
+`.mcp.json` and fix the paths. To keep secrets out of the repo you can leave the
+values as shell variables like `${DATABASE_URL}`.
 
 ### Codex
 
@@ -57,24 +57,24 @@ değerleri `${DATABASE_URL}` gibi kabuk değişkeni olarak bırakabilirsin.
 ```toml
 [mcp_servers.sprint-board]
 command = "node"
-args = ["/mutlak/yol/sprint-board/mcp/server.js"]
+args = ["/absolute/path/sprint-board/mcp/server.js"]
 
 [mcp_servers.sprint-board.env]
 DATABASE_URL = "postgres://..."
-SPRINT_BOARD_ACTOR = "sen@ornek.com"
+SPRINT_BOARD_ACTOR = "you@example.com"
 ```
 
-Ya da CLI ile:
+Or via the CLI:
 
 ```bash
 codex mcp add sprint-board --env DATABASE_URL='postgres://...' \
-  --env SPRINT_BOARD_ACTOR='sen@ornek.com' \
-  -- node /mutlak/yol/sprint-board/mcp/server.js
+  --env SPRINT_BOARD_ACTOR='you@example.com' \
+  -- node /absolute/path/sprint-board/mcp/server.js
 ```
 
 ### OpenCode
 
-`opencode.json` (proje) veya `~/.config/opencode/opencode.json` (genel):
+`opencode.json` (project) or `~/.config/opencode/opencode.json` (global):
 
 ```json
 {
@@ -82,61 +82,62 @@ codex mcp add sprint-board --env DATABASE_URL='postgres://...' \
   "mcp": {
     "sprint-board": {
       "type": "local",
-      "command": ["node", "/mutlak/yol/sprint-board/mcp/server.js"],
+      "command": ["node", "/absolute/path/sprint-board/mcp/server.js"],
       "enabled": true,
       "environment": {
         "DATABASE_URL": "postgres://...",
-        "SPRINT_BOARD_ACTOR": "sen@ornek.com"
+        "SPRINT_BOARD_ACTOR": "you@example.com"
       }
     }
   }
 }
 ```
 
-### Diğer araçlar
+### Other tools
 
-Sunucu standart stdio MCP'si konuşur. Çalıştırma komutu her yerde aynı:
-`node <yol>/mcp/server.js`, yanında iki ortam değişkeni. Yapılandırma
-dosyasının biçimi araca göre değişir; bu üç örneği şablon olarak kullan.
+The server speaks plain stdio MCP. The command to run it is the same everywhere:
+`node <path>/mcp/server.js`, plus the two environment variables. Only the shape of
+the configuration file differs from tool to tool; use these three as templates.
 
-## Araçlar
+## Tools
 
-### Okuma
+### Reading
 
-| Araç | Ne yapar |
+| Tool | What it does |
 |---|---|
-| `list_tasks` | Görevleri filtreleyerek listeler: `day_no`, `track`, `status`, `assignee`, `label`, `unassigned`, `blockers_only` |
-| `get_task` | Bir görevin tüm alanları, etiketleri ve yorumları (`code` büyük/küçük harf duyarsız) |
-| `sprint_summary` | Gün gün ilerleme, kişi başı tamamlama, açık blokerler |
-| `list_activity` | Kim ne yaptı; `actor` veya `task_code` ile filtrelenir |
-| `list_people` | Kayıtlı kişiler, track'leri, yönetici durumu |
+| `list_tasks` | Lists tasks with optional filters: `day_no`, `track`, `status`, `assignee`, `label`, `unassigned`, `blockers_only` |
+| `get_task` | Every field of a task plus its labels and comments (`code` is case-insensitive) |
+| `sprint_summary` | Progress day by day, completion per person, open blockers |
+| `list_activity` | Who did what, newest first; filter by `actor` or `task_code`, `limit` defaults to 30 |
+| `list_people` | Registered people, their tracks, whether they are an admin |
 
-### Yazma
+### Writing
 
-| Araç | Ne yapar |
+| Tool | What it does |
 |---|---|
-| `set_task_status` | Durumu değiştirir. `done` seçilirse tamamlayan ve zaman da yazılır |
-| `assign_task` | Görev atar. `email` verilmezse görevi sen üstlenirsin; devralınabilir bir işte bu `claim`, diğerlerinde `assign` olarak kaydedilir. `unassign: true` sahipsiz bırakır |
-| `create_task` | Yeni görev açar; kod verilmezse `G{gün}-{TRACK}-{sıra}` olarak üretilir |
-| `add_comment` | Yorum bırakır; gövdedeki `@Ad` etiketleri mention olarak çözülür |
-| `set_task_labels` | Etiket ekler / çıkarır |
+| `set_task_status` | Changes the status. Picking `done` also records who completed it and when |
+| `assign_task` | Assigns a task. With no `email` you take it on yourself; that counts as a `claim` only when the task is up for grabs, otherwise it is an `assign` like any other. `unassign: true` clears the assignee |
+| `create_task` | Opens a new task; without a code one is generated as `G{day}-{TRACK}-{n}` |
+| `add_comment` | Leaves a comment; `@Name` in the body resolves to a mention |
+| `set_task_labels` | Adds or removes labels |
 
-**Silme aracı bilinçli olarak yok.** Bir ajanın yanlış anlamayla görev
-silmesini istemiyoruz; silme panodan, insan eliyle yapılır.
+**There is deliberately no delete tool.** We don't want an agent deleting a task on a
+misunderstanding; deleting happens on the board, by hand.
 
-## Nasıl çalışır
+## How it works
 
-Sunucu web uygulamasının HTTP API'sine değil **doğrudan veritabanına** bağlanır
-(`pg` sürücüsü). Böylece yeni bir kimlik doğrulama yüzeyi — servis hesabı, API
-anahtarı — açmak gerekmez; MCP'yi kuran kişi zaten `DATABASE_URL`'e sahiptir.
+The server does not go through the web app's HTTP API — it connects **straight to the
+database** (the `pg` driver). That way there is no new authentication surface to open
+— no service account, no API key; whoever sets up the MCP server already has
+`DATABASE_URL`.
 
-Bunun iki sonucu var:
+Two consequences:
 
-- **Yetki kontrolü panoyla aynı değil.** Web tarafında silme yönetici işidir;
-  burada silme hiç yok. Onun dışında MCP, `SPRINT_BOARD_ACTOR` olarak
-  tanımladığın kişinin yapabileceği her şeyi yapar.
-- **`DATABASE_URL` tam yetkidir.** Onu paylaşmak panonun tamamını paylaşmaktır.
+- **Permissions are not identical to the board's.** On the web, deleting is an admin
+  job; here deleting doesn't exist at all. Beyond that, the MCP server can do
+  anything the person you set as `SPRINT_BOARD_ACTOR` could do.
+- **`DATABASE_URL` is full access.** Sharing it means sharing the whole board.
 
-Yazma işlemleri `activity_log` tablosuna, web tarafındaki `lib/audit.ts` ile
-aynı biçimde yazılır. Panodaki Aktivite ekranında MCP'den gelen hareketleri de
-görürsün — ayrı bir yere gitmez.
+Writes go into the `activity_log` table in the same shape as the web app's
+`lib/audit.ts`. Moves that came from MCP show up on the board's Activity screen too —
+they don't go somewhere separate.

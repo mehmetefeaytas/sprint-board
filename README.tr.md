@@ -171,10 +171,14 @@ Doğrulama **modül yüklenirken** çalışır. Bozuk bir yapılandırma sessizc
 bir panoya değil, ilk istekte net bir hata mesajına dönüşür:
 
 ```
-sprint.config.ts geçersiz:
-  • Track kısaltması "DEV" iki kez kullanılmış — görev kodları çakışır.
-  • "ali@ornek.com" tanımsız bir track'e bağlı: "MOBILE".
+sprint.config.ts is invalid:
+  • Track abbreviation "DEV" is used twice — task codes would collide.
+  • "sam@example.com" points at an undefined track: "MOBILE".
 ```
+
+> Doğrulama mesajları İngilizce. Bunlar arayüz değil, yapılandırmayı düzenleyen
+> geliştiriciye bakan çıktı; depo İngilizce öncelikli olduğu için tek dilde
+> tutuluyor.
 
 ### Üst düzey alanlar
 
@@ -255,8 +259,8 @@ const config: SprintConfig = {
   ],
 
   users: [
-    { email: 'deniz@ornek.com', name: 'Deniz Kaya', track: 'DEV', is_admin: true },
-    { email: 'ege@ornek.com', name: 'Ege Demir', track: 'DEV' },
+    { email: 'dana@example.com', name: 'Dana Reed', track: 'DEV', is_admin: true },
+    { email: 'kai@example.com', name: 'Kai Moreau', track: 'DEV' },
   ],
 
   days: [
@@ -278,7 +282,7 @@ const config: SprintConfig = {
       title: 'Veri şemasını oluştur',
       output: 'Uygulanmış şema',
       is_blocker: true,
-      assignee: 'ege@ornek.com',
+      assignee: 'kai@example.com',
       labels: ['bloker'],
     },
     {
@@ -403,7 +407,7 @@ OpenCode panoyu doğrudan okuyup güncelleyebilir — tarayıcıya geçmeye gere
 ```
 > bugün bana ne kaldı?
 > G2-DEV-01'i tamamlandı işaretle
-> şemayla ilgili yorumda @Deniz'i etiketle
+> şemayla ilgili yorumda @Dana'yı etiketle
 ```
 
 Beş okuma aracı (`list_tasks`, `get_task`, `sprint_summary`, `list_activity`,
@@ -584,7 +588,7 @@ görünür.
 Postgres'e bağlanamaz. İki konteynerin ayakta olduğundan ve `.env.local`
 içinde `NEON_LOCAL_PROXY` tanımlı olduğundan emin ol.
 
-**`sprint.config.ts geçersiz: …` hatası.** Doğrulama modül yüklenirken koşar ve
+**`sprint.config.ts is invalid: …` hatası.** Doğrulama modül yüklenirken koşar ve
 tüm sorunları tek seferde listeler. Mesajdaki maddeleri düzelt; hepsi düzelene
 kadar uygulama açılmaz. Bu bilinçli: yarım yapılandırmayla sessizce garip
 davranan bir pano istemiyoruz.

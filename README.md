@@ -173,12 +173,10 @@ Validation runs **at module load**. A broken configuration doesn't turn into a
 quietly strange board — it turns into a clear error message on the first request:
 
 ```
-sprint.config.ts geçersiz:
-  • Track kısaltması "DEV" iki kez kullanılmış — görev kodları çakışır.
-  • "ali@ornek.com" tanımsız bir track'e bağlı: "MOBILE".
+sprint.config.ts is invalid:
+  • Track abbreviation "DEV" is used twice — task codes would collide.
+  • "sam@example.com" points at an undefined track: "MOBILE".
 ```
-
-Validation messages are emitted in Turkish; the strings live in `lib/config.ts`.
 
 ### Top-level fields
 
@@ -259,8 +257,8 @@ const config: SprintConfig = {
   ],
 
   users: [
-    { email: 'deniz@ornek.com', name: 'Deniz Kaya', track: 'DEV', is_admin: true },
-    { email: 'ege@ornek.com', name: 'Ege Demir', track: 'DEV' },
+    { email: 'dana@example.com', name: 'Dana Reed', track: 'DEV', is_admin: true },
+    { email: 'kai@example.com', name: 'Kai Moreau', track: 'DEV' },
   ],
 
   days: [
@@ -282,7 +280,7 @@ const config: SprintConfig = {
       title: 'Veri şemasını oluştur',
       output: 'Uygulanmış şema',
       is_blocker: true,
-      assignee: 'ege@ornek.com',
+      assignee: 'kai@example.com',
       labels: ['bloker'],
     },
     {
@@ -410,7 +408,7 @@ read and update the board directly — no need to switch to the browser:
 ```
 > what's left for me today?
 > mark G2-DEV-01 as done
-> mention @Deniz in a comment about the schema
+> mention @Dana in a comment about the schema
 ```
 
 There are five read tools (`list_tasks`, `get_task`, `sprint_summary`,
@@ -590,7 +588,7 @@ above; don't try to verify with `vercel env pull`, sensitive values come back em
 a plain Postgres. Make sure both containers are up and that `NEON_LOCAL_PROXY` is set
 in `.env.local`.
 
-**A `sprint.config.ts geçersiz: …` error.** Validation runs at module load and lists
+**A `sprint.config.ts is invalid: …` error.** Validation runs at module load and lists
 every problem at once. Fix the items in the message; the app won't start until they're
 all fixed. This is deliberate: we don't want a board that quietly behaves strangely on
 a half-finished configuration.

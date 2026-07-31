@@ -31,8 +31,13 @@ yüklenirken çalıştığı için bozuk bir yapılandırma derlemeyi de düşü
 
 ## Kod hakkında birkaç not
 
-- Arayüz metinleri, yorumlar ve hata mesajları **Türkçe**. Kod tanımlayıcıları
-  İngilizce.
+- **Arayüz metni koda gömülmez.** Hepsi `lib/i18n/sections/` altındaki
+  sözlüklerden gelir ve iki dilde birlikte yazılır — bir dilde eksik anahtar
+  derlemeyi düşürür. Değişken içeren cümleler için fonksiyon kullanın.
+- Kod **yorumları Türkçe**, tanımlayıcılar İngilizce. Geliştiriciye bakan
+  çıktı (`sprint.config.ts` doğrulama hataları, `mcp/server.js`) İngilizce.
+- `README.md` İngilizce, `README.tr.md` Türkçe. Birini değiştiriyorsanız
+  diğerini de güncelleyin; bölümler birebir eşleşiyor.
 - Yeni bir mutasyon eklerken `lib/audit.ts`'teki `logActivity`'yi çağırın —
   log'lanmayan aksiyon kalmamalı.
 - Yeni bir track rengi gerekiyorsa `lib/config-types.ts`'teki `TrackColor` ile

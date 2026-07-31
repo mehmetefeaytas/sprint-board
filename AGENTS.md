@@ -6,9 +6,18 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Bu depoda çalışırken
 
-Dil: arayüz metinleri, kod yorumları ve hata mesajları **Türkçe**; kod
-tanımlayıcıları İngilizce. Türkçe yazarken ş, ç, ğ, ı, İ, ö, ü karakterlerini
-ASCII karşılıklarıyla değiştirme.
+Dil kuralı üç katmanlı, karıştırma:
+
+| Ne | Dil |
+|---|---|
+| Kod yorumları | **Türkçe** |
+| Kod tanımlayıcıları (değişken, fonksiyon, tip) | İngilizce |
+| Arayüz metinleri ve API hata mesajları | **İki dilli** — `lib/i18n/` sözlüğünden gelir, koda gömülmez |
+| Geliştiriciye bakan çıktı: `sprint.config.ts` doğrulama hataları, `mcp/server.js` | **İngilizce** |
+| Dokümantasyon | `README.md` İngilizce, `README.tr.md` Türkçe; ikisi eşit tutulur |
+
+Türkçe yazarken ş, ç, ğ, ı, İ, ö, ü karakterlerini ASCII karşılıklarıyla
+değiştirme.
 
 Bilmen gereken beş kural:
 
