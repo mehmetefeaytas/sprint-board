@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  web:
+    name: Lint ve derleme
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # DATABASE_URL gerekmez: lib/db.ts baglantiyi tembel kurar, derleme
+      # sirasinda hic sorgu atilmaz. sprint.config.ts dogrulamasi da burada
+      # calisir, yani bozuk yapilandirma CI'da yakalanir.
+      - run: npm run build
+
+  mcp:
+    name: MCP sunucusu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+      - run: npm ci
+        working-directory: mcp
+      - run: node --check server.js
+        working-directory: mcp
+      # Ortam degiskeni olmadan calistirildiginda net bir hatayla cikmali.
+      - name: Eksik ortam degiskeni dogru hata veriyor mu
+        working-directory: mcp
+        run: |
+          if node server.js < /dev/null; then
+            echo "HATA: DATABASE_URL olmadan basariyla cikti"; exit 1
+          fi
+          echo "beklendigi gibi hata verdi"

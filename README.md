@@ -477,7 +477,9 @@ Mimarinin iki kuralı:
 
 ## Katkı
 
-Bkz. [CONTRIBUTING.md](CONTRIBUTING.md).
+Bkz. [CONTRIBUTING.md](CONTRIBUTING.md). CI her push'ta `npm run lint` ve
+`npm run build` koşar; MCP sunucusunun sözdizimini ve eksik ortam değişkeni
+davranışını da ayrıca sınar.
 
 ## Lisans
 
