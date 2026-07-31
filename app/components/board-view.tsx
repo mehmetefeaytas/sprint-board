@@ -235,7 +235,8 @@ export default function BoardView({
           <section className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-base font-semibold">🤝 Devralınabilir işler</h2>
             <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Yapay Zekâ track&apos;i tamamlandığı için bu işler devralınmayı bekliyor.
+              Geldikleri track&apos;in kapasitesi dolduğu için bu işler devralınmayı
+              bekliyor; başka bir track&apos;ten biri üstlenebilir.
             </p>
             {handoverTasks.length === 0 ? (
               <div className="mt-3">

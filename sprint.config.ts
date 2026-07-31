@@ -38,13 +38,15 @@ const config: SprintConfig = {
     { email: 'nil@ornek.com', name: 'Nil Aydın', track: 'DESIGN' },
   ],
 
+  // Tarihler yer tutucu — kendi sprint'inin tarihleriyle değiştir. Geçmiş
+  // tarih bırakırsan pano üstte "Demo tarihi geçti" uyarısı gösterir.
   days: [
-    { day_no: 1, date: '2026-01-05', weekday: 'Pazartesi', theme: 'Kickoff ve kurulum' },
-    { day_no: 2, date: '2026-01-06', weekday: 'Salı', theme: 'Uçtan uca akış' },
+    { day_no: 1, date: '2026-07-30', weekday: 'Perşembe', theme: 'Kickoff ve kurulum' },
+    { day_no: 2, date: '2026-07-31', weekday: 'Cuma', theme: 'Uçtan uca akış' },
     {
       day_no: 3,
-      date: '2026-01-07',
-      weekday: 'Çarşamba',
+      date: '2026-08-03',
+      weekday: 'Pazartesi',
       theme: 'Demo ve kapanış',
       milestone: 'Sprint bitişi — demo canlı',
     },

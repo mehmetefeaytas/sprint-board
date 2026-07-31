@@ -495,9 +495,9 @@ server.registerTool(
   {
     title: 'Görev ata',
     description:
-      'Görevi bir kişiye atar. E-posta verilmezse görevi aktörün kendisi üstlenir ' +
-      '(aktivite kaydında "claim" olarak görünür). Atamayı kaldırmak için ' +
-      'unassign: true kullan.',
+      'Görevi bir kişiye atar. E-posta verilmezse görevi aktörün kendisi üstlenir. ' +
+      'Devralınabilir bir işi kendine alırsan aktivite kaydında "claim", diğer ' +
+      'durumlarda "assign" olarak görünür. Atamayı kaldırmak için unassign: true kullan.',
     inputSchema: {
       code: z.string().describe('Görev kodu'),
       email: z.string().optional().describe('Atanacak kişinin e-postası'),
@@ -520,9 +520,10 @@ server.registerTool(
       target,
       task.id,
     ]);
-    // Kendine almak ile başkasına atamak aynı şey değil; kayıtta ayrışsın.
+    // Web tarafıyla aynı kural (app/api/tasks/[id]/route.ts): kendine atama
+    // yalnızca devralınabilir bir işte "claim" sayılır, yoksa sıradan atamadır.
     await logActivity({
-      action: target === ACTOR ? 'claim' : 'assign',
+      action: target === ACTOR && task.origin_track ? 'claim' : 'assign',
       task_id: task.id,
       task_code: task.code,
       from: task.assignee,

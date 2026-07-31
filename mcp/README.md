@@ -116,7 +116,7 @@ dosyasının biçimi araca göre değişir; bu üç örneği şablon olarak kull
 | Araç | Ne yapar |
 |---|---|
 | `set_task_status` | Durumu değiştirir. `done` seçilirse tamamlayan ve zaman da yazılır |
-| `assign_task` | Görev atar. `email` verilmezse görevi sen üstlenirsin (kayıtta `claim`), `unassign: true` sahipsiz bırakır |
+| `assign_task` | Görev atar. `email` verilmezse görevi sen üstlenirsin; devralınabilir bir işte bu `claim`, diğerlerinde `assign` olarak kaydedilir. `unassign: true` sahipsiz bırakır |
 | `create_task` | Yeni görev açar; kod verilmezse `G{gün}-{TRACK}-{sıra}` olarak üretilir |
 | `add_comment` | Yorum bırakır; gövdedeki `@Ad` etiketleri mention olarak çözülür |
 | `set_task_labels` | Etiket ekler / çıkarır |

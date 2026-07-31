@@ -99,7 +99,7 @@ export default function TaskCard({
               ) : null}
               {origin ? (
                 <span className="rounded-md bg-indigo-100 px-1.5 py-0.5 text-[11px] font-medium text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">
-                  🤝 Devralınabilir · {origin.label} track&apos;inden
+                  {`🤝 Devralınabilir · ${origin.label} track'inden`}
                 </span>
               ) : null}
             </div>

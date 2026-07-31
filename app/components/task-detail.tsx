@@ -188,7 +188,7 @@ export default function TaskDetail({
 
         {origin ? (
           <p className="mt-2 rounded-lg bg-indigo-50 p-2 text-sm text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200">
-            🤝 Devralınabilir iş · → {origin.label} track&apos;inden geldi.
+            {`🤝 Devralınabilir iş · ${origin.label} track'inden geldi.`}
           </p>
         ) : null}
 

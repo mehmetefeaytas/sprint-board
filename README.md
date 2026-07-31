@@ -1,5 +1,13 @@
 # Sprint Panosu
 
+[![CI](https://github.com/mehmetefeaytas/sprint-board/actions/workflows/ci.yml/badge.svg)](https://github.com/mehmetefeaytas/sprint-board/actions/workflows/ci.yml)
+[![Lisans: MIT](https://img.shields.io/badge/lisans-MIT-blue.svg)](LICENSE)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-black.svg)](https://nextjs.org)
+[![Neon Postgres](https://img.shields.io/badge/Neon-Postgres-00e599.svg)](https://neon.tech)
+[![MCP](https://img.shields.io/badge/MCP-sunucusu%20dahil-6f42c1.svg)](mcp/README.md)
+
+**Türkçe** · [English](README.en.md)
+
 Küçük ekipler için hafif bir sprint takip panosu. Jira'yı kurup yapılandırmaya
 değmeyecek işlerde — 3-4 kişilik bir ekibin bir haftalık sprint'inde, bir
 bootcamp projesinde, bir staj programında — "kim ne yaptı" sorusunun cevabını
@@ -19,6 +27,30 @@ Arayüz tamamen Türkçe, mobil uyumlu, açık/koyu temaya uyum sağlıyor.
 > Giriş bir kolaylık mekanizmasıdır, sert bir güvenlik sınırı değil. Panoya
 > gerçekten gizli bilgi koymayın.
 
+![Takvim görünümü](docs/screenshots/takvim.png)
+
+---
+
+## Ekran görüntüleri
+
+<table>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/pano.png"><img src="docs/screenshots/pano.png" alt="Kanban pano görünümü"></a><br><sub><b>Pano görünümü</b> — Yapılacak / Devam ediyor / Bloke / Tamamlandı</sub></td>
+    <td width="50%"><a href="docs/screenshots/gorev-detay.png"><img src="docs/screenshots/gorev-detay.png" alt="Görev detayı"></a><br><sub><b>Görev detayı</b> — durum, atama, etiket, yorum, görev geçmişi</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/aktivite.png"><img src="docs/screenshots/aktivite.png" alt="Aktivite kaydı"></a><br><sub><b>Aktivite</b> — kim ne yaptı, kişi ve eylem filtreli</sub></td>
+    <td width="50%"><a href="docs/screenshots/ekip.png"><img src="docs/screenshots/ekip.png" alt="Ekip ekranı"></a><br><sub><b>Ekip</b> — kişi başı ilerleme; ekleme/çıkarma yalnızca yöneticide</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><a href="docs/screenshots/giris.png"><img src="docs/screenshots/giris.png" alt="Giriş ekranı"></a><br><sub><b>Giriş</b> — şifre alanı yalnızca yönetici hesaplarında açılır</sub></td>
+    <td width="50%" align="center"><a href="docs/screenshots/mobil.png"><img src="docs/screenshots/mobil.png" alt="Mobil görünüm" width="300"></a><br><sub><b>Mobil</b> — telefondan işaretlemek için</sub></td>
+  </tr>
+</table>
+
+> Görsellerdeki veri depodaki `sprint.config.ts` örneğinin aynısı — klonlayıp
+> tohumladığında bu ekranları birebir görürsün.
+
 ---
 
 ## Neler var
@@ -31,9 +63,10 @@ Seçim `localStorage`'da saklanır, bir dahaki gelişte aynı görünüm açıl�
 **Tek tıkla tamamlama.** Görev kartındaki kutuyu işaretlemek yeter; detay
 ekranını açmaya gerek yok.
 
-**Atama ile devralma ayrı kaydedilir.** Bir görevi kendine almak (*claim*) ile
-başkasına atamak (*assign*) aktivite kaydında farklı eylemler olarak görünür —
-"kim gönüllü oldu" ile "kime verildi" karışmaz.
+**Atama ile devralma ayrı kaydedilir.** Devralınabilir bir işi (yani
+`origin_track` taşıyan bir görevi) kendine almak aktivite kaydına *claim*,
+başkasına atamak *assign* olarak düşer — "kim gönüllü oldu" ile "kime verildi"
+karışmaz.
 
 **Yorum ve `@ad` etiketleme.** Yorum yazarken `@` sonrası ekip üyesi adları
 otomatik tamamlanır; eşleşen isimler `mentions` tablosuna işlenir. Eşleştirme
@@ -217,11 +250,11 @@ const config: SprintConfig = {
   ],
 
   days: [
-    { day_no: 1, date: '2026-01-05', weekday: 'Pazartesi', theme: 'Kickoff ve kurulum' },
+    { day_no: 1, date: '2026-07-30', weekday: 'Perşembe', theme: 'Kickoff ve kurulum' },
     {
       day_no: 2,
-      date: '2026-01-06',
-      weekday: 'Salı',
+      date: '2026-07-31',
+      weekday: 'Cuma',
       theme: 'Demo ve kapanış',
       milestone: 'Sprint bitişi — demo canlı',
     },
@@ -352,6 +385,29 @@ docker rm -f sb-pg sb-neon-proxy
 
 ---
 
+## MCP: panoyu terminalden kullan
+
+Depo bir **stdio MCP sunucusu** içeriyor (`mcp/`). Claude Code, Codex ve
+OpenCode panoyu doğrudan okuyup güncelleyebilir — tarayıcıya geçmeye gerek yok:
+
+```
+> bugün bana ne kaldı?
+> G2-DEV-01'i tamamlandı işaretle
+> şemayla ilgili yorumda @Deniz'i etiketle
+```
+
+Beş okuma aracı (`list_tasks`, `get_task`, `sprint_summary`, `list_activity`,
+`list_people`) ve beş yazma aracı (`set_task_status`, `assign_task`,
+`create_task`, `add_comment`, `set_task_labels`) var. **Silme aracı bilinçli
+olarak yok** — bir ajanın yanlış anlamayla veri silmesini istemiyoruz.
+
+Ajanın yaptığı her değişiklik, panodan yapılmış gibi aynı aktivite kaydına,
+`SPRINT_BOARD_ACTOR` olarak tanımladığın kişinin adına düşer.
+
+Kurulum ve üç araç için hazır yapılandırma: [`mcp/README.md`](mcp/README.md).
+
+---
+
 ## Yetki modeli
 
 | İşlem | Herkes | Yönetici |
@@ -424,6 +480,102 @@ Mimarinin iki kuralı:
   Her mutasyon istemciden `/api/*` uçlarına gider.
 - **Tek audit noktası.** Her mutasyon route'u `lib/audit.ts`'teki
   `logActivity` fonksiyonunu çağırır. Böylece log'lanmayan bir aksiyon kalmaz.
+
+---
+
+## Veri modeli
+
+Yedi tablo. Şemanın tek kaynağı `lib/schema.ts`; tüm `CREATE`'ler
+`IF NOT EXISTS` olduğu için tohumlama tekrar çağrılabilir.
+
+| Tablo | Ne tutar | Notlar |
+|---|---|---|
+| `users` | E-posta (PK), ad, track, `is_admin` | Giriş whitelist'i. Kişi silinirse görevleri sahipsiz kalır (`ON DELETE SET NULL`). |
+| `sprint_days` | `day_no` (PK), tarih, gün adı, tema, milestone | Gün sekmeleri. |
+| `tasks` | `code` (UNIQUE), gün, track, `origin_track`, başlık, açıklama, çıktı, durum, atanan, `is_blocker`, sıra, tamamlama bilgisi | `code` kalıcı kimlik ve URL. |
+| `task_labels` | (`task_id`, `label`) | Bileşik PK; aynı etiket iki kez eklenemez. Görev silinirse birlikte gider. |
+| `comments` | Görev, yazar, gövde, zaman | |
+| `mentions` | Yorum, görev, etiketlenen kişi, `seen` | Yorum gövdesindeki `@ad` çözümlemesinden üretilir. |
+| `activity_log` | Aktör, eylem, görev, eski/yeni değer, not, zaman | Tek yazma noktası `lib/audit.ts`. Görev silinse bile kayıt kalır — bu yüzden FK yok. |
+
+Eylem tipleri: `login`, `status`, `assign`, `claim`, `comment`, `label`,
+`create`, `delete`, `user_add`, `user_remove`.
+
+---
+
+## API uçları
+
+Hepsi oturum ister; `proxy.ts` oturumsuz istekleri en başta keser. Yönetici
+gerektiren uçlar route handler içinde ayrıca kontrol edilir.
+
+| Metot | Uç | Kim | Ne yapar |
+|---|---|---|---|
+| `GET` | `/api/auth/login?email=` | herkes | Bu e-posta için şifre gerekiyor mu? |
+| `POST` | `/api/auth/login` | herkes | Giriş; yöneticide `password` zorunlu |
+| `POST` | `/api/auth/logout` | oturum | Çerezi siler |
+| `GET` | `/api/board` | oturum | Panonun ihtiyaç duyduğu her şey tek yanıtta |
+| `POST` | `/api/tasks` | oturum | Görev oluşturur; kod otomatik üretilir |
+| `PATCH` | `/api/tasks/[id]` | oturum | `title`, `detail`, `output`, `day_no`, `status`, `assignee` — yalnızca gönderilen alanlar değişir |
+| `DELETE` | `/api/tasks/[id]` | **yönetici** | Görevi siler |
+| `GET` `POST` | `/api/tasks/[id]/comments` | oturum | Yorumlar; `@ad` mention'a çevrilir |
+| `POST` `DELETE` | `/api/tasks/[id]/labels` | oturum | Etiket ekler/çıkarır |
+| `GET` | `/api/activity` | oturum | Aktivite kaydı |
+| `GET` | `/api/users` | oturum | Ekip listesi |
+| `POST` `DELETE` | `/api/users` | **yönetici** | Kişi ekler/çıkarır |
+| `POST` | `/api/seed` | `x-seed-token` | Şema + tohumlama (oturum gerekmez) |
+
+---
+
+## Sorun giderme
+
+**`/api/seed` 403 dönüyor.** `SEED_TOKEN` sunucuda tanımsız ya da başlıktaki
+değerle eşleşmiyor. Vercel'de değeri boru hattıyla eklediysen boş kaydedilmiş
+olabilir — `--value` bayrağıyla tekrar ekle. Değişkeni değiştirdikten sonra
+yeniden deploy etmen gerekir.
+
+**Girişte 500 alıyorum.** Genellikle `SESSION_SECRET` boş. Yukarıdaki `--value`
+tuzağına bak; `vercel env pull` ile doğrulamaya çalışma, sensitive değerler boş
+görünür.
+
+**`fetch failed` / bağlantı hatası, lokalde.** Neon HTTP sürücüsü düz
+Postgres'e bağlanamaz. İki konteynerin ayakta olduğundan ve `.env.local`
+içinde `NEON_LOCAL_PROXY` tanımlı olduğundan emin ol.
+
+**`sprint.config.ts geçersiz: …` hatası.** Doğrulama modül yüklenirken koşar ve
+tüm sorunları tek seferde listeler. Mesajdaki maddeleri düzelt; hepsi düzelene
+kadar uygulama açılmaz. Bu bilinçli: yarım yapılandırmayla sessizce garip
+davranan bir pano istemiyoruz.
+
+**Tohumladım ama değişikliğim panoda yok.** `ON CONFLICT DO NOTHING` mevcut
+kayıtları güncellemez. Var olan bir görevi düzeltmek için panoyu ya da
+veritabanını kullan.
+
+**Görev kartındaki track rengi gri çıkıyor.** Veritabanındaki track,
+yapılandırmadan kaldırılmış. `trackStyle` bilinmeyen değerlerde çökmez, nötr
+gri döner. Kaldırdığın track'i geri ekle ya da o görevleri başka bir track'e taşı.
+
+**MCP: `"…" panoda kayıtlı değil`.** `SPRINT_BOARD_ACTOR` yapılandırmadaki bir
+e-posta olmalı. Yazma işlemleri bu kişi adına kaydedildiği için zorunlu.
+
+---
+
+## Bilinçli olarak yok
+
+Bunlar eksik değil, kapsam dışı — küçük ekipte karşılığını vermeyen
+karmaşıklık:
+
+- **Sürükle-bırak.** Durum değiştirmek tek tık; kanban kolonları arasında
+  taşıma yok.
+- **Bildirim.** E-posta ya da push yok. Mention'lar `mentions` tablosunda
+  duruyor; bildirim isteyen bunun üzerine kurabilir.
+- **Sprint geçmişi.** Tek sprint tutulur. Yeni sprint = yeni yapılandırma ve
+  temiz veritabanı.
+- **Rol/izin sistemi.** İki seviye var: herkes ve yönetici. Aradaki ince
+  ayarlar yok.
+- **Çoklu dil.** Arayüz Türkçe. Metinler bileşenlerin içinde; çeviri altyapısı
+  eklenmedi.
+- **Gerçek kimlik doğrulama.** E-posta doğrulanmaz. Amaç denetim izi, erişim
+  kontrolü değil.
 
 ---
 
