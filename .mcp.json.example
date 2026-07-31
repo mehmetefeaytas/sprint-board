@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sprint-board": {
+      "command": "node",
+      "args": ["./mcp/server.js"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}",
+        "SPRINT_BOARD_ACTOR": "${SPRINT_BOARD_ACTOR}"
+      }
+    }
+  }
+}

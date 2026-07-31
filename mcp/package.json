@@ -1,0 +1,22 @@
+{
+  "name": "sprint-board-mcp",
+  "version": "1.0.0",
+  "description": "Sprint Board panosunu MCP uzerinden okuyup guncelleyen stdio sunucusu",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "pg": "^8.22.0",
+    "zod": "^4.4.3"
+  },
+  "bin": {
+    "sprint-board-mcp": "server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
